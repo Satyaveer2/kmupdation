@@ -161,7 +161,7 @@
             const user = document.getElementById("username").value;
             const pass = document.getElementById("password").value;
             const remember = document.getElementById("rememberMe").checked;
-            if (user === "yots" && pass === "yots@123") {
+            if (user === "123" && pass === "123") {
                 if(remember) {
                     localStorage.setItem("rememberUser", user);
                 } else {
