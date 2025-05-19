@@ -1,0 +1,3211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Duty Assignment Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #fafbfc; padding: 0; margin: 0;}
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+            border-bottom: 1px solid #e3e3e3;
+            padding: 8px 20px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .topbar .depot { color: #1e88e5; }
+        .topbar .datetime { color: #333; letter-spacing: 0.5px;}
+        .topbar .user {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            font-size: 14px;
+            color: #222;
+            user-select: none;
+        }
+        .admin-badge {
+            display: flex;
+            align-items: center;
+            background: #ffe082;
+            color: #b8860b;
+            font-weight: bold;
+            border-radius: 12px;
+            padding: 2px 10px 2px 6px;
+            margin-right: 10px;
+            font-size: 14px;
+            box-shadow: 0 1px 5px rgba(255,193,7,0.08);
+            gap: 4px;
+        }
+        .admin-icon {
+            font-size: 17px;
+            margin-right: 3px;
+        }
+        .topbar .avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #e3e3e3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            color: #1976d2;
+        }
+        .form-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 20px;
+        }
+        .form-row label { font-size: 13px; font-weight: 600; }
+        .form-row select, .form-row input[type="date"], .form-row input[type="text"] {
+            font-size: 13px;
+            padding: 2px 6px;
+            height: 28px;
+            border: 1px solid #bbb;
+            border-radius: 2px;
+            min-width: 120px;
+            background: #fff;
+        }
+        .form-row input[type="text"] { width: 100px; }
+        .main-table {
+            border-collapse: collapse;
+            width: 100%;
+            background: #fff;
+            font-size: 13px;
+        }
+        .main-table th, .main-table td {
+            border: 1px solid #d3d3d3;
+            padding: 4px 6px;
+            text-align: center;
+            min-width: 70px;
+            height: 32px;
+        }
+        .main-table th {
+            background: #f3f6fb;
+            font-weight: bold;
+        }
+        .main-table select, .main-table input[type="number"], .main-table input[type="text"] {
+            font-size: 13px;
+            padding: 2px 4px;
+            height: 24px;
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 2px;
+            background: #fff;
+        }
+        .btn-save, .btn-heldup, .btn-reset {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 2px;
+            margin-bottom: 0;
+        }
+        .btn-save {
+            background: #4CAF50;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-heldup {
+            background: #e53935;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-reset {
+            background: #ffc107;
+            color: #333;
+            border: none;
+            cursor: pointer;
+            margin-left: 2px;
+        }
+        .btn-save:hover { background: #388e3c; }
+        .btn-heldup:hover { background: #b71c1c; }
+        .btn-reset:hover { background: #ff9800; }
+        .saved { background: #fff9c4 !important; }
+        .heldup { background: #ffcdd2 !important; }
+        .hidden { display: none !important; }
+        .toast {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            min-width: 180px;
+            max-width: 320px;
+            background: #323232;
+            color: #fff;
+            padding: 12px 18px;
+            border-radius: 6px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.12);
+            font-size: 14px;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 9999;
+            transition: opacity 0.4s, transform 0.4s;
+            transform: translateY(40px);
+        }
+        .toast.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+        .toast.error {
+            background: #e53935;
+        }
+        .toast.success {
+            background: #388e3c;
+        }
+        .custom-suggestions {
+            position: absolute;
+            left: 0; right: 0; top: 100%;
+            background: #fff;
+            border: 1px solid #bbb;
+            border-radius: 0 0 4px 4px;
+            z-index: 100;
+            max-height: 180px;
+            overflow-y: auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.09);
+            display: none;
+        }
+        .custom-suggestions.show { display: block; }
+        .custom-suggestions div {
+            padding: 7px 12px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .custom-suggestions .active,
+        .custom-suggestions div:hover {
+            background: #e3f2fd;
+        }
+        .input-wrap { position: relative; }
+        @media (max-width: 900px) {
+            .main-table th, .main-table td { font-size: 11px; min-width: 50px; }
+            .form-row select, .form-row input[type="date"], .form-row input[type="text"] {
+                min-width: 80px; font-size: 11px; height: 24px;
+            }
+            .topbar { font-size: 13px; padding: 6px 8px;}
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <span class="depot">DEPOT: INDRAPRASTHA DEPOT</span>
+        <span class="datetime" id="datetime"></span>
+        <span class="user" id="userNameDisplay">
+            <span class="admin-badge">
+                <span class="admin-icon">&#128081;</span>
+                <span class="admin-name">Dharmveer</span>
+            </span>
+            <span class="avatar">&#128100;</span>
+            <span id="userNameText">Select MIS Name</span>
+        </span>
+    </div>
+    <div class="form-row">
+        <label for="opdate">Select Operation Date:</label>
+        <input type="date" id="opdate" value="">
+        <label for="misname">Select MIS Name:</label>
+        <select id="misname">
+            <option value="">Select MIS Name</option>
+            <option>Himanshu Goswami</option>
+            <option>Keshav</option>
+            <option>Vijay Thakur</option>
+        </select>
+        <input type="text" placeholder="Search">
+        <button id="downloadExcel">Download Excel</button>
+    </div>
+    <div style="text-align:right; margin: 18px 20px 0 0;">
+        <button id="saveToGoogleSheet" style="background:#1976d2;color:#fff;padding:7px 18px;border:none;border-radius:3px;font-size:15px;cursor:pointer;">
+            Save All to Google Sheet
+        </button>
+    </div>
+    <table class="main-table" id="dutyTable">
+        <thead>
+        <tr>
+            <th>S.No.</th>
+            <th>Duty No</th>
+            <th>Sch. Km</th>
+            <th>Bus</th>
+            <th>Driver</th>
+            <th>Driver Name</th>
+            <th>Out ODO</th>
+            <th>In ODO</th>
+            <th>Operate Km</th>
+            <th>Time Marker</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody id="dutyTableBody">
+        <!-- Duty rows will be generated by JS -->
+        </tbody>
+    </table>
+    <div id="toast" class="toast"></div>
+    <script>
+        // ========================== DATA ==========================
+        // Duty List
+        const dutyList = [
+            ["156/4",109.6],["156/4A",109.6],["156/6",109.6],["156/6A",109.6],["156/10",109.6],["156/10A",109.6],
+            ["213A/4",97.5],["213A/4A",101.9],["213A/6",97.5],["213A/6A",101.9],["213A/8",97.5],["213A/8A",101.9],
+            ["213A/10",97.5],["213A/10A",101.9],["213A/12",97.5],["213A/12A",101.9],["213A/14",97.5],["213A/14A",101.9],
+            ["213A/16",97.5],["213A/16A",101.9],["213A/18",97.5],["213A/18A",101.9],["213A/20",97.5],["213A/20A",101.9],
+            ["267/8",122.4],["267/8A",122.4],
+            ["307/2",118.8],["307/2A",118.8],["307/4",118.8],["307/4A",118.8],["307/6",118.8],["307/6A",118.8],
+            ["307/8",118.8],["307/8A",118.8],["307/10",118.8],["307/10A",118.8],["307/12",118.8],["307/12A",118.8],
+            ["307/14",118.8],["307/14A",118.8],["307/16",118.8],["307/16A",118.8],["307/18",118.8],["307/18A",118.8],
+            ["307/20",118.8],["307/20A",118.8],
+            ["317/2",98.5],["317/2A",98.5],["317/4",98.5],["317/4A",98.5],["317/6",98.5],["317/6A",98.5],["317/8",98.5],["317/8A",98.5],
+            ["317/10",98.5],["317/10A",98.5],["317/12",98.5],["317/12A",98.5],
+            ["320/4",102.9],["320/4A",105.2],["320/8",102.9],["320/8A",105.2],["320/14",102.9],["320/14A",105.2],
+            ["340/4",98.9],["340/4A",103.3],["340/6",98.9],["340/6A",103.3],["340/8",98.9],["340/8A",103.3],["340/10",98.9],["340/10A",103.3],
+            ["340/12",98.9],["340/12A",103.3],["340/14",98.9],["340/14A",103.3],
+            ["359/2",112.9],["359/2A",112.9],["359/4",112.9],["359/4A",112.9],["359/6",112.9],["359/6A",112.9],["359/8",112.9],["359/8A",112.9],
+            ["359/10",112.9],["359/10A",112.9],["359/12",112.9],["359/12A",112.9],["359/14",112.9],["359/14A",112.9],
+            ["370/2",117.1],["370/2A",117.1],["370/4",117.1],["370/4A",117.1],
+            ["378/2",111.4],["378/2A",111.4],["378/4",111.4],["378/4A",111.4],["378/6",111.4],["378/6A",111.4],["378/10",111.4],["378/10A",111.4],
+            ["378/12",111.4],["378/12A",111.4],
+            ["380/4",105.1],["380/4A",105.1],["380/8",105.1],["380/8A",105.1],
+            ["390/6",111],["390/6A",110.5],
+            ["391/4",111.2],["391/4A",111.2],["391/6",111.2],["391/6A",111.2],["391/8",111.2],["391/8A",111.2],["391/10",111.2],["391/10A",111.2],
+            ["391/12",111.2],["391/12A",111.2],
+            ["413/2",96.3],["413/2A",96.3],["413/4",96.3],["413/4A",96.3],["413/6",96.3],["413/6A",96.3],["413/8",96.3],["413/8A",96.3],
+            ["413/10",96.3],["413/10A",96.3],["413/12",96.3],["413/12A",96.3],["413/14",96.3],["413/14A",96.3],["413/16",96.3],["413/16A",96.3],
+            ["427/2",118.7],["427/2A",118.8],["427/4",118.7],["427/4A",118.8],["427/6",118.7],["427/6A",118.8],["427/8",118.7],["427/8A",118.8],
+            ["427/10",118.7],["427/10A",118.8],["427/12",118.7],["427/12A",118.8],
+            ["456/2",115.9],["456/2A",115.9],["456/4",115.9],["456/4A",115.9],["456/6",115.9],["456/6A",115.9],["456/8",115.9],["456/8A",115.9],
+            ["456/10",115.9],["456/10A",115.9],["456/12",115.9],["456/12A",115.9],["456/14",115.9],["456/14A",115.9],["456/16",115.9],["456/16A",115.9],
+            ["456/20",115.9],["456/20A",115.9],
+            ["473./4",119.3],["473./4A",119.3],["473./12",119.3],["473./12A",119.3],["473./20",119.3],["473./20A",119.3],["473./28",119.3],["473./28A",119.3],
+            ["473./32",119.3],["473./32A",119.3],["473./36",119.3],["473./36A",119.3],["473./44",119.3],["473./44A",119.3],["473./48",119.3],["473./48A",119.3],
+            ["473./50",119.3],["473./50A",119.3],["473./52",119.3],["473./52A",119.3],
+            ["505/2",112.2],["505/2A",112.2],["505/4",112.2],["505/4A",112.2],["505/6",112.2],["505/6A",112.2],["505/8",112.2],["505/8A",112.2],
+            ["505/10",112.2],["505/10A",112.2],["505/12",112.2],["505/12A",112.2],["505/14",112.2],["505/14A",112.2],
+            ["751E/2",119.3],["751E/2A",123.7],["751E/6",119.3],["751E/6A",123.7],["751E/10",119.3],["751E/10A",123.7],
+            ["763/8",109.6],["763/8A",109.6],["763/12",109.6],["763/12A",109.6],
+            ["780E/4",113.1],["780E/4A",113.1],["780E/6",113.1],["780E/6A",113.1],["780E/8",113.1],["780E/8A",113.1],["780E/10",113.1],["780E/10A",113.1],
+            ["781A/2",120.2],["781A/2A",120.2],["781A/4",120.2],["781A/4A",120.2],["781A/8",120.2],["781A/8A",120.2],["781A/26",120.2],["781A/26A",120.2],
+            ["859/4",101.8],["859/4A",101.8],["859/6",101.8],["859/6A",101.8],
+            ["871A/12",96],["871A/12A",96],
+            ["944/2",98],["944/2A",98],["944/4",98],["944/4A",98],["944/6",98],["944/6A",98],["944/8",98],["944/8A",98],["944/10",98],["944/10A",98],
+            ["944/12",98],["944/12A",98],
+            ["946/4",104.9],["946/4A",104.9],["946/6",104.9],["946/6A",104.9],["946/8",104.9],["946/8A",104.9],["946/10",104.9],["946/10A",104.9],
+            ["946/12",104.9],["946/12A",104.9],["946/14",104.9],["946/14A",104.9],["946/16",104.9],["946/16A",104.9],["946/18",104.9],["946/18A",104.9],
+            ["946/20",104.9],["946/20A",104.9],["946/22",104.9],["946/22A",104.9],
+            ["956/4",109.1],["956/4A",114],
+            ["971/2",100],["971/2A",100],["971/4",100],["971/4A",100],["971/6",100],["971/6A",100],["971/8",100],["971/8A",100],["971/10",100],["971/10A",100],
+            ["971/12",100],["971/12A",100],["971/14",100],["971/14A",100],["971/16",100],["971/16A",100],["971/18",100],["971/18A",100],["971/20",100],["971/20A",100],
+            ["971/22",100],["971/22A",100],["971/24",100],["971/24A",100],["971/26",100],["971/26A",100],["971/28",100],["971/28A",100],["971/30",100],["971/30A",100],
+            ["CBD-2(-)/6",98.5],["CBD-2(-)/6A",98.5],["CBD-2(+)/8",100.3],["CBD-2(+)/8A",100.3]
+        ];
+
+        // Bus Numbers
+        const busNumbers = [
+            "DL1PD5031","DL1PD5068","DL1PD5041","DL1PD5023","DL1PD5748","DL1PD5327","DL1PD4997","DL1PD5696","DL1PD5693","DL1PD5752",
+            "DL1PD5709","DL1PD5698","DL1PD5711","DL1PD5097","DL1PD5308","DL1PD5132","DL1PD5142","DL1PD5091","DL1PD5705","DL1PD5036",
+            "DL1PD5106","DL1PD5192","DL1PD5150","DL1PD4987","DL1PD5055","DL1PD5733","DL1PD5049","DL1PD5092","DL1PD5691","DL1PD5755",
+            "DL1PD5113","DL1PD5200","DL1PD5065","DL1PD5761","DL1PD5212","DL1PD5057","DL1PD5264","DL1PD5075","DL1PD5263","DL1PD5017",
+            "DL1PD6234","DL1PD5704","DL1PD5729","DL1PD5695","DL1PD5764","DL1PD5160","DL1PD5760","DL1PD5242","DL1PD5732","DL1PD5238",
+            "DL1PD5738","DL1PD5766","DL1PD5153","DL1PD5034","DL1PD5246","DL1PD5105","DL1PD4993","DL1PD5278","DL1PD5124","DL1PD5101",
+            "DL1PD5176","DL1PD5095","DL1PD5083","DL1PD5745","DL1PD5100","DL1PD5087","DL1PD5715","DL1PD5211","DL1PD5147","DL1PD5259",
+            "DL1PD5256","DL1PD5146","DL1PD5143","DL1PD5157","DL1PD5048","DL1PD5028","DL1PD5688","DL1PD5171","DL1PD5177","DL1PD5718",
+            "DL1PD5127","DL1PD5286","DL1PD5753","DL1PD5145","DL1PD5690","DL1PD5144","DL1PD5735","DL1PD5771","DL1PD5074","DL1PD5186",
+            "DL1PD5189","DL1PD5682","DL1PD5110","DL1PD5734","DL1PD5120","DL1PD5152","DL1PD5731","DL1PD5005","DL1PD5042","DL1PD5129",
+            "DL1PD5736","DL1PD5681","DL1PD5336","DL1PD5252","DL1PD5040","DL1PD5697","DL1PD5325","DL1PD6180","DL1PD5015","DL1PD5284",
+            "DL1PD5139","DL1PD5241","DL1PD5712","DL1PD5059","DL1PD5030","DL1PD5276","DL1PD5217","DL1PD5751","DL1PD5140","DL1PD5126",
+            "DL1PD5197","DL1PD5717","DL1PD5014","DL1PD5754","DL1PD5302","DL1PD5029","DL1PD5194","DL1PD5776","DL1PD5085","DL1PD5728",
+            "DL1PD5699","DL1PD5165","DL1PD5136","DL1PD5706","DL1PD5172","DL1PD5739","DL1PD5232","DL1PD5169","DL1PD5162"
+        ];
+
+        // Driver master list (ID: Name)
+        const driverMaster = {
+            1001: "SHYAM SUNDER",
+    1002: "MAHENDER",
+    1003: "OM PRAKASH",
+    1004: "ASHWANI KUMAR",
+    1005: "SURINDER KUMAR",
+    1006: "SURENDER SINGH",
+    1007: "SHRI BHAGWAN",
+    1008: "JITENDER KUMAR",
+    1009: "NASEEM AHMAD",
+    1010: "OM SINGH",
+    1011: "SUNIL BASISTA",
+    1012: "RAMESH PAL",
+    1013: "BINAJ",
+    1014: "MAHKO",
+    1015: "OMVIR SINGH",
+    1016: "PARMOD KUMAR",
+    1017: "VIJAY TYAGI",
+    1018: "ARUN SARNA",
+    1019: "MOHD ALI",
+    1020: "GURJEET SINGH",
+    1021: "R K MISHRA",
+    1022: "GURPREET",
+    1023: "RAMESH KUMAR",
+    1024: "DEVINDER KAUSHIK",
+    1025: "TEJVIR",
+    1026: "ANIL KUMAR",
+    1027: "MOHAN SINGH",
+    1028: "YOGENDER SINGH RATHI",
+    1029: "GULAB SINGH",
+    1030: "RAJESH",
+    1031: "RAMESH SINGH",
+    1032: "MUKESH TIWARI",
+    1033: "SUNIL KOHLI",
+    1034: "FAKRUDDIN",
+    1035: "DHANVIR SINGH",
+    1036: "RAKESH KUMAR",
+    1037: "BHOPAL SINGH",
+    1038: "JOGINDER SINGH",
+    1039: "RAJESH KUMAR DHUPAR",
+    1040: "SHAKEEL",
+    1041: "CHARAN SINGH",
+    1042: "RAKESH KUMAR",
+    1043: "MOHD AFTAB",
+    1044: "JAI PARKESH",
+    1045: "BRIJ MOHAN",
+    1046: "SUBHASH CHAND",
+    1047: "BALWAN SINGH",
+    1048: "AMJAD ALI",
+    1049: "KISHORE KUMAR SHARMA",
+    1050: "RAMESH KUMAR",
+    1051: "JUGAL KISHOR",
+    1052: "YOGESH KUMAR",
+    1053: "RAHEES",
+    1054: "SACHIN",
+    1055: "INDERPAL SINGH",
+    1056: "KEHRI SINGH",
+    1057: "NADEEM AKHTAR",
+    1058: "JITANDER PAL",
+    1059: "MAHENDER SINGH",
+    1060: "MOHIT",
+    1061: "PREM SHANKAR",
+    1062: "DARSHAN KUMAR",
+    1063: "GURUMUKH SINGH",
+    1064: "GYANESH",
+    1065: "M.D.PYAREY",
+    1066: "KAMESHWAR RAY",
+    1067: "RIZWAN",
+    1068: "SATINDER SINGH",
+    1069: "VIJAY KUMAR",
+    1070: "HARI OM",
+    1071: "CHANDRAVIR SINGH",
+    1072: "JASVINDER SINGH",
+    1073: "BHUPENDER SINGH",
+    1074: "RAKESH",
+    1075: "AJAY NAR WAL",
+    1076: "VIJAY",
+    1077: "BASANT KUMAR DATT",
+    1078: "MAHENDER KUMAR",
+    1079: "RAJVIR",
+    1080: "JYOTI PRAKASH",
+    1081: "RAHMAT ALI",
+    1082: "AJAY KUMAR",
+    1083: "AYUB KHAN",
+    1084: "JAFAR ALI",
+    1085: "BAL CHAND",
+    1086: "S. G GUPTA",
+    1087: "SATENDER",
+    1088: "MAHESH",
+    1089: "CHAMAN LAL",
+    1090: "RAKESH SINGH RATHORE",
+    1091: "GIRIRAJ SINGH",
+    1092: "SHER SINGH",
+    1093: "BHARAT BHUSHAN",
+    1094: "MADAN",
+    1095: "MUKESH KUMAR",
+    1096: "SUNIT PAL SINGH",
+    1097: "PREM BAHADUR",
+    1098: "CHANDER KISHOR",
+    1099: "PARDEEP",
+    1100: "NASIR AHMED",
+    1101: "SUSHIL KUMAR",
+    1102: "PAWAN SINGH",
+    1103: "SARDAR SINGH",
+    1104: "NAND LAL",
+    1105: "GURJINDER SINGH",
+    1106: "SAVENDRA SINGH",
+    1107: "ASHOK KUMAR SHARMA",
+    1108: "SHAMSHER",
+    1109: "JITENDER KUMAR",
+    1110: "RAJESH KUMAR",
+    1111: "PADAM",
+    1112: "RAVI KUMAR",
+    1113: "MAHESH KUMAR",
+    1114: "RAJESH KUMAR",
+    1115: "RAVI SHANKAR",
+    1116: "SURESH KUMAR",
+    1117: "ISHWAR SINGH",
+    1118: "RAJU",
+    1119: "MAN MOHAN",
+    1120: "MANJUL MOHAN",
+    1121: "RANVIR SINGH",
+    1122: "ROHTASH KUMAR",
+    1123: "ROHTASH SINGH",
+    1124: "MITHUN JAGGI",
+    1125: "SANJAY KUMAR",
+    1126: "AYUB KHAN",
+    1127: "DINESH SINGH",
+    1128: "SATYA PAL SINGH",
+    1129: "SALAUDDIN",
+    1130: "SUBHASH RANA",
+    1131: "SATGURDIAL SINGH",
+    1132: "MOHD. NASIM",
+    1133: "MANOJ KUMAR",
+    1134: "RAM BAHADUR",
+    1135: "ARIF MOHD",
+    1136: "RISHI PAL",
+    1137: "VINOD KUMAR",
+    1138: "RAJU/DEBARRED",
+    1139: "VIRENDER SINGH",
+    1140: "UMESH KUMAR",
+    1141: "AJEET KUMAR",
+    1142: "CHARAN SINGH",
+    1143: "ASHOK KUMAR",
+    1144: "ROHTASH DANIEL",
+    1145: "JAI PRAKASH",
+    1146: "JANE ALAM",
+    1147: "VINOD KUMAR",
+    1148: "UMESH KUMAR",
+    1149: "TARSEM SINGH",
+    1150: "PARMOD KUMAR",
+    1151: "LOKENDER KUMAR",
+    1152: "VINOD SAXENA",
+    1153: "SURENDRA KUMAR",
+    1154: "SUMIT KUMAR",
+    1155: "VIRENDER",
+    1156: "KIRAN CHAND JOSHI",
+    1157: "PAWAN KUMAR",
+    1158: "YOGENDER SINGH",
+    1159: "DINESH",
+    1160: "DEEPAK",
+    1161: "PARMOD KUMAR",
+    1162: "SHYAM VEER SINGH",
+    1163: "DHARMENDER SINGH",
+    1164: "VED PARKASH",
+    1165: "DEVENDER",
+    1166: "REHAN RAJA KHAN",
+    1167: "PRAHLAD SINGH TANWAR",
+    1168: "MEHAK SINGH",
+    1169: "SANJEEV KUMAR",
+    1170: "KISHAN SINGH",
+    1171: "RAJ SINGH",
+    1172: "M P SINGH",
+    1173: "YUSUF ALI",
+    1174: "ANAND KUMAR",
+    1175: "ASHOK",
+    1176: "JITENDER",
+    1177: "SUNIL KUMAR",
+    1178: "BALBIR",
+    1179: "JUGINDER SINGH",
+    1180: "SUNIL MISHRA",
+    1181: "KAILASH KUMAR",
+    1182: "JAI PAL",
+    1183: "PURAN SINGH",
+    1184: "DILIP KUMAR",
+    1185: "SHEHZAD",
+    1186: "RESHAM SINGH",
+    1187: "JITENDER KUMAR",
+    1188: "JETENDRA",
+    1189: "MANJIT SINGH",
+    1190: "DANVEER",
+    1191: "ANIL KUMAR JAIN",
+    1192: "GURVINDER SINGH",
+    1193: "RAJUDIN",
+    1194: "RAJU",
+    1195: "SURESH KUMAR",
+    1196: "RAJ KUMAR",
+    1197: "SUKHBIR SINGH",
+    1198: "MANOJ KUMAR",
+    1199: "BHUPENDER KUMAR",
+    1200: "V P MALIK",
+"1201": "RAJU",
+"1202": "MUKESH KUMAR CHAUHAN",
+"1203": "VIJAY BAHADUR SINGH",
+"1204": "SONU KUMAR SHARMA",
+"1205": "AMIL",
+"1206": "MUNNA KHAN ISLAMUDDIN",
+"1207": "SURENDER KUMAR",
+"1208": "BIJENDER SINGH",
+"1209": "RAJESH KUMAR",
+"1210": "NARESH KUMAR",
+"1211": "ABDUL WAZID",
+"1212": "RAKESH KUMAR",
+"1213": "DINESH",
+"1214": "MOHAN LAL",
+"1215": "IQBAL SINGH",
+"1216": "KULDEEP SINGH",
+"1217": "HOTAM SINGH",
+"1218": "SATYENDER",
+"1219": "NIRANKAR SINGH",
+"1220": "PANKAJ KUMAR JAIN",
+"1221": "SURESH KUMAR",
+"1222": "SANJAY",
+"1223": "ASHOK BHARDWAJ",
+"1224": "PARMOD YADAV",
+"1225": "MUKESH KUMAR",
+"1226": "RAJENDRA SINGH",
+"1227": "SUNIL RAO",
+"1228": "SANDEEP RATHORE",
+"1229": "KIRAN PAL",
+"1230": "ASHOK KUMAR",
+"1231": "VIR VIKRAM SINGH",
+"1232": "VED PARKASH",
+"1233": "AJAY KUMAR",
+"1234": "CHANDER BHAN",
+"1235": "RAJESH KUMAR",
+"1236": "MOHD BILAL",
+"1237": "MAJOR SINGH",
+"1238": "RAFI MOHD",
+"1239": "ANOOP SINGH",
+"1240": "S S RAWAT",
+"1241": "PRATAP SINGH",
+"1242": "DIWAN SINGH KUNWAR",
+"1243": "RAJIV PAWAR",
+"1244": "GURU BACHAN",
+"1245": "RAJBIR SINGH",
+"1246": "ANIL KUMAR",
+"1247": "GURNAM SINGH",
+"1248": "JEEVAN KISHORE",
+"1249": "ANEESH",
+"1250": "YOGESH KUMAR",
+"1251": "SATISH KUMAR",
+"1252": "DHARAM SINGH",
+"1253": "ASHISH KUMAR",
+"1254": "SANJAY KUMAR",
+"1255": "AKHIL KAPOOR",
+"1256": "JAI BHAGWAN",
+"1257": "KAILASH CHAND",
+"1258": "JITENDER CHUGH",
+"1259": "CHARAN SINGH",
+"1260": "MOHD AYYUB KHAN",
+"1261": "SATBIR SINGH",
+"1262": "SUDISH BABU",
+"1263": "KARMBIR",
+"1264": "JASPAL SINGH",
+"1265": "GANESH SINGH",
+"1266": "HARINDAR BASISTA",
+"1267": "VED RAJ",
+"1268": "MOHD.MUSTAK",
+"1269": "RAJU",
+"1270": "SOM NATH",
+"1271": "BABLU",
+"1272": "HARINDER MALIK",
+"1273": "SANTOSH CHOUDHARY",
+"1274": "GIRJESH SHARMA",
+"1275": "DHARMDEV",
+"1276": "AJIT JHA",
+"1277": "MOHD NADEEM",
+"1278": "BHUPENDER SINGH",
+"1279": "DAVINDER SINGH",
+"1280": "MAHESH KUMAR",
+"1281": "DHARMENDER KUMAR",
+"1282": "MANOJ KUMAR",
+"1283": "BALJINDER SINGH",
+"1284": "RAJENDER SINGH SAINI",
+"1285": "LEKHRAJ SHARMA",
+"1286": "SATBIR NAGAR",
+"1287": "BALBINDER SINGH",
+"1288": "PRAMOD KUMAR",
+"1289": "SURENDER SINGH",
+"1290": "GIRDHARI LAL",
+"1291": "SURAJ PAL",
+"1292": "ZAKIR HUSSAIN",
+"1293": "DALIP KUMAR",
+"1294": "NARINDER KUMAR",
+"1295": "ASHISH KUMAR SHARMA",
+"1296": "ARUN KUMAR JHA",
+"1297": "SANJAY KUMAR",
+"1298": "NITIN SHARMA",
+"1299": "MD. SAGEER",
+"1300": "NUTAN KUMAR",
+"1301": "ARUN KUMAR",
+"1302": "TAJ MOHD",
+"1303": "ONKAR SINGH",
+"1304": "CHANDER PAL SINGH",
+"1305": "BRAHAMANAND PAL",
+"1306": "GURNAM SINGH",
+"1307": "JEEVAN KISHORE",
+"1308": "ANIL KUMAR",
+"1309": "SUSHIL KUMAR SHARMA",
+"1310": "SANTOSH KUMAR KASHYAP",
+"1311": "BRIJRAJ VERMA",
+"1312": "SATENDRA CHOUDHARY",
+"1313": "ABDUL WAHID",
+"1314": "JAGDISH SHARMA",
+"1315": "SATISH KUMAR",
+"1316": "MOBIN KHAN",
+"1317": "SATPAL SINGH",
+"1318": "RAMESHVAR PRASAD",
+"1319": "MOHD.ABID",
+"1320": "MUKESH KUMAR",
+"1321": "RAM AVTAR",
+"1322": "SURESH",
+"1323": "SALESH KUMAR",
+"1324": "BRIJESH KUMAR",
+"1325": "MUNISH KUMAR",
+"1326": "MOHD.SHAFIQ",
+"1327": "RAJPAL",
+"1328": "ASHISH KUMAR",
+"1329": "TINKU",
+"1330": "SUNDER PAL",
+"1331": "NARESH KUMAR",
+"1332": "SUSHIL KUMAR SHARMA",
+"1333": "VIPIN",
+"1334": "JITENDER KUMAR",
+"1335": "BRIJ KISHORE",
+"1336": "MANJEET TIWARI",
+"1337": "ABDUL KALAM",
+"1338": "ISHWAR SINGH",
+"1339": "SAHDEV MALHOTRA",
+"1340": "PREM PRAKASH",
+"1341": "MANIK DUTTA",
+"1342": "KARAN PAL",
+"1343": "VIJAY BHUSHAN",
+"1344": "MAHENDER SINGH",
+"1345": "VIRENDER KUMAR",
+"1346": "BALWAN SINGH",
+"1347": "KOSHLANDAR",
+"1348": "SURENDER SINGH",
+"1349": "SWARAN SINGH",
+"1350": "MOHD.ASLAM",
+"1351": "BAL KISHAN",
+"1352": "MUKESH KUMAR",
+"1353": "RAJ KUMAR",
+"1354": "RAKESH KUMAR",
+"1355": "PREM PAL SINGH",
+"1356": "S GURDEEP SINGH",
+"1357": "MOHD SAMEER ALAM",
+"1358": "JAMSHED ALI KHAN",
+"1359": "DHANI RAM",
+"1360": "PRAMOD KUMAR",
+"1361": "SANJAY KUMAR",
+"1362": "MANOJ KUMAR",
+"1363": "ANIL KUMAR",
+"1364": "MAHESH KUMAR",
+"1365": "SANJEEV KUMAR",
+"1366": "AMLESH TYAGI",
+"1367": "MANOJ TOMAR",
+"1368": "SALIM AHMED",
+"1369": "RAJINDER SINGH",
+"1370": "VIJENDRA",
+"1371": "SOHAN PAL SINGH",
+"1372": "BHUPENDER SINGH",
+"1373": "MOHD HASSAN",
+"1374": "JAGDISH KUMAR",
+"1375": "VIKASH",
+"1376": "SALIM AKHTAR KHAN",
+"1377": "DEEPAK KUMAR",
+"1378": "VIKRAM SINGH",
+"1379": "MD MUSTAQIM KHAN",
+"1380": "SHYAM LAL",
+"1381": "MOHD MOTI",
+"1382": "MAHAVIR SINGH",
+"1383": "AFTAB AHMED",
+"1384": "RAJESH SHARMA",
+"1385": "SHAUKAT ALI",
+"1386": "KANWAR SAIN",
+"1387": "SATENDER SINGH",
+"1388": "RAMESH CHAND",
+"1389": "HARI KISHAN",
+"1390": "HARI CHAND",
+"1391": "SUBASH CHAND",
+"1392": "HARIBHAJAN SINGH",
+"1393": "HARBHAJAN SINGH",
+"1394": "RAJESH KUMAR",
+"1395": "DINESH KUMAR",
+"1396": "SUBHASH SINGH",
+"1397": "JAGPREET SINGH",
+"1398": "ASHOK KR SHARMA",
+"1399": "AJIT SINGH",
+"1400": "RAKESH KUMAR",
+"1401": "UMESH KUMAR",
+"1402": "SHRI KRISHAN",
+"1403": "BALIINDER SINGH",
+"1404": "CHARAN",
+"1405": "TEJ BAHADUR",
+"1406": "MAHAVEER TYAGI",
+"1407": "AMAR JIT SINGH",
+"1408": "A K SHARMA",
+"1409": "MOHD SHAHID",
+"1410": "SANAM KUMAR",
+"1411": "ANAND PANDIT",
+"1412": "SANTOSHVIR",
+"1413": "PUSHPINDER KUMAR",
+"1414": "BIJENDER",
+"1415": "SHRI CHAND",
+"1416": "SHARAFAT KHAN",
+"1417": "JAI SINGH",
+"1418": "SUNIL KUMAR",
+"1419": "BIJENDER SINGH",
+"1420": "RAM DIWAKAR",
+"1421": "TURSHAN PAL SINGH",
+"1422": "GOVIND BALLABH",
+"1423": "AMAR SINGH",
+    "1424": "BHAGIRATH",
+    "1425": "RAJ KUMAR",
+    "1426": "ANIL KUMAR",
+    "1427": "HARI OM SHARMA",
+    "1428": "RAMESH KR",
+    "1429": "VIRENDER SINGH",
+    "1430": "SHISH PAL",
+    "1431": "JAGBIR SINGH",
+    "1432": "HEM RAJ",
+    "1433": "KULDEEP KUMAR",
+    "1434": "JOGINDER SINGH",
+    "1435": "INDERJEET",
+    "1436": "LAXMI CHAND",
+    "1437": "SAMBU RAM",
+    "1438": "MOHD ARIF",
+    "1439": "MUKESH KUMAR",
+    "1440": "RAMESH CHANDER",
+    "1441": "AVDHESH PATHAK",
+    "1442": "GURDAYAL SINGH",
+    "1443": "KAWAR PAL",
+    "1444": "SURESH CHAND",
+    "1445": "VISHAL",
+    "1446": "PUSHPENDRA KUMAR",
+    "1447": "SANDEEP SINGH",
+    "1448": "ROHIT BHARTI",
+    "1449": "Y D SINGH",
+    "1450": "ANIL KUMAR",
+    "1451": "KUKAN KUMAR",
+    "1452": "ANKIT SAHAI",
+    "1453": "SATENDER KUMAR",
+    "1454": "JAG MOHAN",
+    "1455": "NEERAJ TANWAR",
+    "1456": "JITENDER SINGH",
+    "1457": "ASHOK KUMAR",
+    "1458": "SURESH KUMAR",
+    "1459": "ROSHAN LAL",
+    "1460": "OM PRAKASH",
+    "1461": "MANOJ KUMAR",
+    "1462": "RAKESH KUMAR",
+    "1463": "DAYA CHAND",
+    "1464": "KISHAN LAL",
+    "1465": "PAWAN KUMAR",
+    "1466": "MANJEET SINGH",
+    "1467": "DHARMENDER SINGH",
+    "1468": "KULDEEP",
+    "1469": "SHIV KUMAR",
+    "1470": "PUSHPENDER SHARMA",
+    "1471": "NIZAM KHAN",
+    "1472": "AJIT KR. KASANA",
+    "1473": "RAJ KUMAR",
+    "1474": "VIKRAM SINGH",
+    "1475": "AZEEM AHMED",
+    "1476": "LOKESH KUMAR",
+    "1477": "SHIV KUMAR",
+    "1478": "LAXMAN THAPA",
+    "1479": "RAVINDER SINGH",
+    "1480": "J S BHATI",
+    "1481": "AJEET SINGH",
+    "1482": "KHURSHID",
+    "1483": "SHABAB",
+    "1484": "DINESH KUMAR",
+    "1485": "INDERJEET SINGH",
+    "1486": "SHRI BHAGWAN",
+    "1487": "TRILOK CHAND GOYAL",
+    "1488": "MAHAVIR SHARAM",
+    "1489": "MUBASSIR",
+    "1490": "KHURESH KUMAR",
+    "1491": "MAHARAJ SINGH",
+    "1492": "GURDEV SINGH",
+    "1493": "PRAVEEN KUMAR",
+    "1494": "MAHINDER SINGH",
+    "1495": "SATISH KUMAR",
+    "1496": "PARAMJIT SINGH",
+    "1497": "V.K NAYAK",
+    "1498": "ABHISHEK SHARMA",
+    "1499": "NAZIM",
+    "1500": "SATISH KUMAR",
+    "1501": "MADAN",
+    "1502": "NARENDER SINGH",
+    "1503": "VIKASH SURYAVANSHI",
+    "1504": "RAJ KUMAR",
+    "1505": "VINOD KUMAR",
+    "1506": "GANESH KUMAR",
+    "1507": "GARIEL MICHAEL",
+    "1508": "KRISHANA SARKAR",
+    "1509": "ABDUL NAZIM",
+    "1510": "SARBJIT SINGH",
+    "1511": "PREM CHAND",
+    "1512": "BHUPINDER SINGH",
+    "1513": "SUSHIL KUMAR",
+    "1514": "DEEPAK SINGH",
+    "1515": "SUDESH KR",
+    "1516": "DEEPAK GUPTA",
+    "1517": "RAMPAL SINGH",
+    "1518": "NARESH CHOTALA",
+    "1519": "SANJAY KUMAR",
+    "1520": "RAJINDER KUMAR",
+    "1521": "SANDEEP",
+    "1522": "ROHTAS",
+    "1523": "RAJVIR SINGH",
+    "1524": "DEVENDER SINGH",
+    "1525": "SURINDER",
+    "1526": "GAUTAM PRASAD",
+    "1527": "RAJENDER PRASAD",
+    "1528": "RAJPAL",
+    "1529": "RAJINDER KUMAR",
+    "1530": "MD JAHID KHAN",
+    "1531": "YUDHISTER YADAV",
+    "1532": "OMVIR SINGH",
+    "1533": "DWARIKA PD",
+    "1534": "JAGAT SINGH",
+    "1535": "RAVINDER KUMAR",
+    "1536": "RAM DEV",
+    "1537": "SANJAY KUMAR",
+    "1538": "BABU KHAN",
+    "1539": "NAWAB KHAN",
+    "1540": "PREM SINGH",
+    "1541": "SATISH KUMAR",
+    "1542": "SUBHASH CHAND",
+    "1543": "LEKH RAJ",
+    "1544": "KEWAL KISHAN",
+    "1545": "JOGENDER SINGH",
+    "1546": "DEEPAK PANWAR",
+    "1547": "JATINDER SINGH",
+    "1548": "HARKARAN SINGH",
+    "1549": "KAMAL SINGH",
+    "1550": "JASWANT SINGH",
+    "1551": "RANVIR SINGH",
+    "1552": "ASHOK KUMAR",
+    "1553": "DILBAG",
+    "1554": "RANBIR SINGH",
+    "1555": "SHYAM SINGH",
+    "1556": "MALKEET SINGH",
+    "1557": "DEV KUMAR RATHORE",
+    "1558": "RAJESH KR SOLANKI",
+    "1559": "REHMAT ALI",
+    "1560": "BHARAT KUMAR",
+    "1561": "MD SARTAZ",
+    "1562": "LILADHAR SHARMA",
+    "1563": "VISHNU PATEL",
+    "1564": "ANUP SINGH",
+    "1565": "KRISHAN PAL",
+    "1566": "ABAS",
+    "1567": "RAVINDER KUMAR",
+    "1568": "RAJ KUMAR",
+    "1569": "JOGINDER SINGH",
+    "1570": "KRISHAN DEV MISHRA",
+    "1571": "RAJENDER KUMAR",
+    "1572": "RAJ PAL",
+    "1573": "ASHOK KUMAR",
+    "1574": "NAVEEN KUMAR",
+    "1575": "JIWAN SINGH",
+    "1576": "GAURAV KR VERMA",
+    "1577": "RAJNESH KUMAR",
+    "1578": "ROSHAN LAL",
+    "1579": "RAKESH KUMAR",
+    "1580": "RAJENDER SINGH NEGI",
+    "1581": "MANISH KUMAR",
+    "1582": "RAKESH KUMAR",
+    "1583": "BHIM RAO",
+    "1584": "JAGDISH KUMAR",
+    "1585": "SANGRAM SINGH",
+    "1586": "DARSHAN SINGH",
+    "1587": "SANTOSH KUMAR",
+    "1588": "HARISH KUMAR NAGAR",
+    "1589": "MOHAR SINGH",
+    "1590": "R A GOSWAMI",
+    "1591": "KULDEEP AANAND",
+    "1592": "RAJEEV KUMAR",
+    "1593": "SUMIT KUMAR",
+    "1594": "ANIL KUMAR",
+    "1595": "BRIJESH KUMAR",
+    "1596": "MANOHAR LAL",
+    "1597": "NAHAR SINGH",
+    "1598": "VINAY KUMAR",
+    "1599": "HARBIR SINGH",
+    "1600": "BABLOO",
+    "1601": "AJIT SINGH",
+    "1602": "RAMESH KUMAR",
+    "1603": "MOHD AZHAR",
+    "1604": "VIKRAM SINGH",
+    "1605": "SURESH",
+    "1606": "GOPAL",
+    "1607": "PRADEEP KUMAR",
+    "1608": "TEJ NARAYAN PASWAN",
+    "1609": "HUKAM SINGH",
+    "1610": "RAM PRASAD PASWAN",
+    "1611": "AMIR KHAN",
+    "1612": "SANJAY PAL",
+    "1613": "RAMESHWAR PASWAN",
+    "1614": "SUNDER DASS",
+    "1615": "KEHAR SINGH",
+    "1616": "MOHD ASHRAF ",
+    "1617": "JARNAIL SINGH",
+    "1618": "SURENDER SINGH",
+    "1619": "GUL HASSAN",
+    "1620": "MOHD YUSUF",
+    "1621": "DHIR SINGH",
+    "1622": "PREM SHARMA",
+    "1623": "S S SHARMA",
+    "1624": "ALI SHER",
+    "1625": "SUBHASH",
+    "1626": "RAJINDER SINGH",
+    "1627": "NAVEEN KUMAR",
+    "1628": "JANARDHAN",
+    "1629": "HARJIT SINGH",
+    "1630": "SANJEEV KUMAR",
+    "1631": "AJAY TYAGI",
+    "1632": "JITENDER KUMAR SHARMA",
+    "1633": "JIT KUMAR",
+    "1634": "CHANDER MOHAN",
+    "1635": "RAM KUMAR ",
+    "1636": "ANIL SOLANKI",
+    "1637": "NAVEEN KUMAR",
+    "1638": "MUKESH KUMAR",
+    "1639": "JOHNY",
+    "1640": "PRAVEEN KUMAR",
+    "1641": "VIJAY TYAGI",
+    "1642": "RAMESH CHAND",
+    "1643": "AMAN SHARMA",
+    "1644": "MEHAR ALAM",
+    "1645": "GAJENDER SINGH",
+    "1646": "RAJINDER SINGH",
+    "1647": "GANGA PRASAD",
+    "1648": "KISHORE KUMAR",
+    "1649": "NAWAB SINGH",
+    "1650": "SHIV NARAIN",
+    "1651": "ANIL KUMAR",
+    "1652": "RAVINDER KUMAR",
+    "1653": "CHANDRIKA PRASAD",
+    "1654": "RAJ KUMAR",
+    "1655": "BRIJ PAL SINGH",
+    "1656": "VIJAY PAL",
+    "1657": "NAR SINGH",
+    "1658": "KRISHAN PAL",
+    "1659": "SANDEEP KUMAR",
+    "1660": "SANJEEV KUMAR",
+    "1661": "MEHFOOZ ARIF",
+    "1662": "NASEEM MOHD",
+    "1663": "PRADEEP KUMAR",
+    "1664": "SURAJ PAL",
+    "1665": "VEER SINGH",
+    "1666": "RAJBIR SINGH",
+    "1667": "NARENDER SINGH",
+    "1668": "LALIT KUMAR",
+    "1669": "SATISH KUMAR",
+    "1670": "SURESH",
+    "1671": "KISHORI LAL",
+    "1672": "SANTOSH",
+    "1673": "HARDEEP SINGH",
+    "1674": "ATEEQ AHMAD",
+    "1675": "JAMALUDDIN",
+    "1676": "SANJEEV KUMAR",
+    "1677": "SHAHZAD ALI",
+    "1678": "OMBEER SINGH",
+    "1679": "JITENDRA",
+    "1680": "MANISH KUMAR",
+    "1681": "BIRBAL",
+    "1682": "LAL CHAND",
+    "1683": "DALJEET SINGH",
+    "1684": "RAKESH KUMAR",
+    "1685": "YOGESH KUMAR",
+    "1686": "VIPIN KUMAR",
+    "1687": "RAMJANI",
+    "1688": "RAKESH WALIA",
+    "1689": "BANTI",
+    "1690": "NARENDRA TOMER",
+    "1691": "AJAY PAL SINGH",
+    "1692": "ANKIT SHARMA",
+    "1693": "BABBLU YADAV",
+    "1694": "MUKESH KUMAR",
+    "1695": "SACHIN KUMAR",
+    "1696": "GS DHILLON",
+    "1697": "RAJ KUMAR",
+    "1698": "MOHD YASIN",
+    "1699": "SANJAY KUMAR",
+    "1700": "ASHA RAM",
+    "1701": "SANJEEV KUMAR TYAGI",
+    "1702": "SUNIL KUMAR ",
+    "1703": "GAURAV MAHAJAN",
+    "1704": "CHANDER SHEKHAR",
+    "1705": "MUNEESH KUMAR",
+    "1706": "MUKARRAM",
+    "1707": "LOKESH KUMAR",
+    "1708": "MAHENDER SINGH",
+    "1709": "BABLOO",
+    "1710": "RAKESH KUMAR",
+    "1711": "SONU TYAGI",
+    "1712": "NARESH KUMAR",
+    "1713": "RAJENDRA SINGH",
+    "1714": "DINESH KUMAR",
+    "1715": "S KHAN",
+    "1716": "SURJEET SINGH",
+    "1717": "MAZHAR KHAN",
+    "1718": "NARENDER KUMAR",
+    "1720": "RAJ KUMAR BABBAR",
+    "1721": "IQBAL",
+    "1722": "VIPIN KUMAR",
+    "1723": "VIJAY KUMAR",
+    "1724": "DHARMENDER KUMAR",
+    "1725": "RAJESH KUMAR BHATI",
+    "1726": "ANOKH CHAND",
+    "1727": "SUNIL KUMAR",
+    "1728": "DIVANDER",
+    "1729": "NOOR HASAN",
+    "1730": "RAHUL GANDHI",
+    "1731": "NARENDRA KUMAR",
+    "1732": "AJIT KUMAR",
+    "1733": "OM PRAKASH",
+    "1734": "RAM KUMAR ",
+    "1735": "VINESH BHADANA",
+    "1736": "PARVEEN ANAND",
+    "1737": "GULSHAN",
+    "1738": "RAJESH KUMAR",
+    "1739": "ARUN KUMAR",
+    "1740": "VISHAL",
+    "1741": "JAGPRAVESH SHARMA",
+    "1742": "DILEEP KUMAR",
+    "1743": "DURGESH KUMAR",
+    "1744": "MOHD FARHAN ANSARI",
+    "1745": "AMIT KUMAR",
+    "1746": "DHARAM PRAKASH",
+    "1747": "MANISH BAIRWA",
+    "1748": "DILIP KUMAR",
+    "1749": "RAMAN AGGARWAL",
+    "1750": "MD SALIM",
+    "1751": "GOVIL MALIK",
+    "1752": "ABDUL BAQI",
+    "1753": "ASHIK MALIK",
+    "1754": "PANKAJ KUMAR",
+    "1755": "HARVIR SINGH",
+    "1756": "ANURAG BANA",
+    "1757": "MOHD SALMAN",
+    "1758": "SATISH SHARMA",
+    "1759": "DURGESH KUMAR",
+    "1760": "USMAN BEG",
+    "1761": "KRISHAN KANT SHARMA",
+    "1762": "KUNAL CHOUDHARY",
+    "1763": "LAXMAN SINGH",
+    "1764": "ARJUN PAL",
+    "1765": "DILDAR SINGH",
+    "1766": "PRAMOD SAINI",
+    "1767": "TRISHPAL SINGH",
+    "1768": "SURJEET",
+    "1769": "INDRAJEET KUMAR",
+    "1770": "SHANU",
+    "1771": "SACHIN KUMAR",
+    "1772": "PRAVEEN KUMAR",
+    "1773": "MANSOR ALAM",
+    "1774": "ANIL KUMAR",
+    "1775": "ROSHAN ALI",
+    "1776": "AMIT KUMAR",
+    "1777": "TINKLE",
+    "1778": "ANIL KUMAR",
+    "1779": "DAANVIR",
+    "1780": "JATIN",
+    "1781": "SURESH CHAND",
+    "1782": "SUNEEL GIRI",
+    "1783": "SAROJ KUMAR PASWAN",
+    "1784": "MOHD SHOAIB",
+    "1785": "ROSHAN",
+    "1786": "GURJEET SINGH",
+    "1787": "DHARAMPAL",
+    "1788": "SUNIL KUMAR",
+    "1789": "ROHIT KUMAR",
+    "1790": "SHAHNAWAZ",
+    "1791": "RAJ KUMAR",
+    "1792": "SANJAY",
+    "1793": "SHER SINGH",
+    "1794": "RAMESH KAMAT",
+    "1795": "VIPUL",
+    "1796": "GURVINDER SINGH",
+    "1797": "AMIT KUMAR",
+    "1798": "SHASHI MAHALWAL",
+    "1799": "PANKAJ VASHIST",
+    "1800": "LAKHSMAN",
+    "1801": "GURJEET SINGH",
+    "1802": "BALESH RAM",
+    "1803": "GOURAV KUMAR",
+    "1804": "CHHATAR SINGH",
+    "1805": "ROHIT",
+    "1806": "UDAIVIR SINGH",
+    "1807": "CHETAN",
+    "1808": "PAWAN KUMAR",
+    "1809": "ROHIT KUMAR",
+    "1810": "SAMEER KHAN",
+    "1811": "FARIN KHAN",
+    "1812": "IQBAL AHMED",
+    "1813": "AMIR KHAN",
+    "1814": "PAWAN ",
+    "1815": "ANIL KUMAR",
+    "1816": "PREET PAL SINGH",
+    "1817": "AMIT KUMAR",
+    "1818": "NAVIN CHANDRA PANDEY",
+    "1819": "PRADEEP KUMAR GAHALAUT",
+    "1820": "RIZWAN ALI",
+    "1821": "ASHUDIN",
+    "1822": "PRADUMAN MALIK",
+    "1823": "MANISH KUMAR NAAGAR",
+    "1824": "PARMJEET SINGH",
+    "1825": "PRAKASH SINGH",
+    "1826": "SAURABH",
+    "1827": "MOHD ARIF KHAN",
+    "1828": "AMIT KUMAR",
+    "1829": "MANISH KUMAR",
+    "1830": "ATUL KUMAR YADAV",
+    "1831": "VINAY KUMAR",
+    "1832": "KHEM CHAND SHARMA",
+    "1833": "MUKESH KUMAR MANJHI",
+    "1834": "ANTAR PREET SINGH",
+    "1835": "MAHIPAL SINGH",
+    "1836": "KRISHAN GOPAL",
+    "1837": "VIRENDER KUMAR",
+    "1838": "MANOJ KUMAR",
+    "1839": "SOHAIL AHMED",
+    "1840": "ISHAR KHAN",
+    "1841": "RAJENDRA KUMAR NAGAR",
+    "1842": "KALU RAM",
+    "1843": "AMAN GUPTA",
+    "1844": "GULSHAN",
+    "1845": "ROHIT KUMAR",
+    "1846": "RAM KUMAR ",
+    "1847": "SUSHIL",
+    "1848": "IMRAN KHAN",
+    "1849": "SUNIL KUMAR",
+    "1850": "RAM BABU KUMAR",
+    "1851": "DHARAM BIR",
+    "1852": "ZULFIKAR ALI",
+    "1853": "RAJ KUMAR",
+    "1854": "BHUDEV ",
+    "1855": "MANOJ KUMAR YADAV",
+    "1856": "MANISH SHARMA",
+    "1857": "AKASH",
+    "1858": "PARDEEP",
+    "1859": "NAND LAL MAHATO",
+    "1860": "MANOJ KUMAR",
+    "1861": "DINESH KUMAR",
+    "1862": "RAM IKBAL SHAH",
+    "1863": "SHOKAT ALI",
+    "1864": "HARINDER KUMAR ATTRI",
+    "1865": "SUNIL KUMAR",
+    "1866": "IRFAN",
+    "1867": "SHIVA CHAUDHARY",
+    "1868": "ADITYA SHARMA",
+    "1869": "SHAKIR MALIK",
+    "1870": "SHRI NIWAS",
+    "1871": "VISHAL",
+    "1872": "SUBHASH SALANKI",
+    "1873": "SANJEEV GAUTAM",
+    "1874": "SUDESH KUMAR",
+    "1875": "LOKESH KUMAR",
+    "1876": "PREM CHAND",
+    "1877": "YASH PAL SINGH",
+    "1878": "RAJ KUMAR",
+    "1879": "NARENDER",
+    "1880": "ANUJ KUMAR SHARMA",
+    "1881": "ANKIT KUMAR",
+    "1882": "RAVI KUMAR",
+    "1883": "PANKAJ BHARDWAJ",
+    "1884": "AKASH",
+    "1885": "SHABU KHAN",
+    "1886": "PRADEEP KUMAR SHARMA",
+    "1887": "JOGINDER SINGH",
+    "1888": "VIJAY",
+    "1889": "ROHIT",
+    "1890": "MAHIPAL SINGH RAWAT",
+    "1891": "RAVI CHAUHAN",
+    "1892": "AMAR PAL",
+    "1893": "S C GUPTA",
+    "1894": "AMIR KHAN",
+    "1895": "PRADEEP GAUTAM",
+    "1896": "USMAN  ",
+    "1897": "AMAN SHARMA",
+    "1898": "KRISHAN KUMAR",
+    "1899": "ATUL YADAV",
+    "1900": "VIKKY KASHYAP",
+    "1901": "DINESH KUMAR",
+    "1902": "NITIN GUPTA",
+    "1903": "KARAN DHALLA",
+    "1904": "SONU KUMAR ",
+    "1905": "NIRANJAN KUMAR",
+    "1906": "DAULAT RAM",
+    "1907": "RAJA",
+    "1908": "NITESH KUMAR",
+    "1909": "TIRTH NATH TIWARI",
+    "1910": "SONU",
+    "1911": "SUNIL",
+    "1912": "KAUSHAL KUMAR",
+    "1913": "RAHMAT ALI",
+    "1914": "RAJAN",
+    "1915": "RAKESH GARG",
+    "1916": "SHAMBHU KUMAR",
+    "1917": "SANOVAR ALI",
+    "1918": "JAYKAVAR",
+    "1919": "MAHFOOZ AHMED",
+    "1920": "NEERAJ KUMAR",
+    "1921": "DEVENDRA",
+    "1922": "SACHIN",
+    "1923": "SANJAY KUMAR",
+    "1924": "MOHD SAEED",
+    "1925": "ISHWAR SINGH",
+    "1926": "CHETAN KUMAR",
+    "1927": "MANOJ KUMAR",
+    "1928": "JAI SINGH",
+    "1929": "AZHARUDDIN",
+    "1930": "SANDEEP SHARMA",
+    "1931": "AJIT SINGH",
+    "1932": "SHIVAM KUMAR",
+    "1933": "NAZRUDIN KHAN",
+    "1934": "AKASH SENGAR",
+    "1935": "BIRAN",
+    "1936": "MAHANDER",
+    "1937": "CHAND KHAN",
+    "1938": "INDERJEET SINGH",
+    "1939": "MANOJ KUMAR",
+    "1940": "SANDEEP KUMAR MISHRA",
+    "1941": "SURENDER KUMAR",
+    "1942": "GAURAV SEHGAL",
+    "1943": "MD IRFAN",
+    "1944": "SUNIL KUMAR",
+    "1945": "RAKESH KUMAR",
+    "1946": "DEEPAK SHARMA",
+    "1947": "RAVI",
+    "1948": "MANJEET SINGH",
+    "1949": "RAVENDRA SINGH",
+    "1950": "SATINDER KUMAR",
+    "1951": "LOKESH  ",
+    "1952": "AJAY KUMAR",
+    "1953": "DEEPAK ",
+    "1954": "MANISH RAJORIA",
+    "1955": "SHER SINGH",
+    "1956": "NAWAZIS CHOUDHARY",
+    "1957": "AJAY GUPTA",
+    "1958": "BRAHMA DEV",
+    "1959": "SHUBHAM",
+    "1960": "ASHWANI",
+    "1961": "GULSHAN KUMAR",
+    "1962": "NIHAL CHAND SHARMA",
+    "1963": "JITENDER",
+    "1964": "NITIN KUMAR",
+    "1965": "GAURAV KUMAR",
+    "1966": "DHARA SINGH",
+    "1967": "GAUTAM SARVEEN",
+    "1968": "RAJU KUMAR",
+    "1969": "VINIMESH KUMAR",
+    "1970": "RAHUL CHOURASIYA",
+    "1971": "NAVEEN KUMAR",
+    "1972": "DEVENDER DAS",
+    "1973": "SAMSAD",
+    "1974": "ANIL KUMAR",
+    "1975": "SOKIN",
+    "1976": "NITESH  AGGARWAL",
+    "1977": "DAL KISHAN",
+    "1978": "SUNIL KUMAR",
+    "1979": "LOVE KUMAR KHATRI",
+    "1980": "AMIT KUMAR",
+    "1981": "ASHISH KUMAR",
+    "1982": "GURUDAYAL SINGH",
+    "1983": "HARBAZ",
+    "1984": "NAHID KHAN",
+    "1985": "DEEPAK KUMAR",
+    "1986": "DHEERAJ KUMAR",
+    "1987": "RAJINDER SINGH",
+    "1988": "ATUL KUMAR  ",
+    "1989": "SANDEEP KUMAR",
+    "1990": "PANKAJ KUMAR",
+    "1991": "PAWAN KR PATHAK",
+    "1992": "VINOD",
+    "1993": "KAMAL BIDHURI",
+    "1994": "LALIT KUMAR",
+    "1995": "NAVEEN KR KAMAT",
+    "1996": "ANIL KUMAR",
+    "1997": "DAVINDER SINGH",
+    "1998": "NITISH SHARMA",
+    "1999": "RAJU  ",
+    "2000": "SANJAY KUMAR",
+    "2001": "HARISH HATHWAL",
+    "2002": "RAVINDER SHARMA",
+    "2003": "DEEPAK YADAV",
+    "2004": "RAM PUJAN SINGH",
+    "2005": "RAVI",
+    "2006": "RAHUL KUMAR",
+    "2007": "PUNIT KUMAR",
+    "2008": "OM BIR",
+    "2009": "AMIT UJJAWAL",
+    "2010": "GAURAV UJJAWAL",
+    "2011": "NADEEM  ",
+    "2012": "MOHSIN KHAN",
+    "2013": "RAJU",
+    "2014": "MOHMMAD SAMEER",
+    "2015": "ASLAM",
+    "2016": "KULWANT SINGH",
+    "2017": "RAMAKANT SHARMA",
+    "2018": "KAMAL KISHOR",
+    "2019": "MANISH RAUT",
+    "2020": "MUKESH KUMAR",
+    "2021": "GAURAV KUMAR",
+    "2022": "MOHD IRFAN",
+    "2023": "SULEMAN",
+    "2024": "MUKESH CHAND GUPTA",
+    "2025": "DHARAM SINGH",
+    "2026": "RAJA ABINESH",
+    "2027": "RAJINDER SINGH",
+    "2028": "MERAJ",
+    "2029": "AJAY KUMAR",
+    "2030": "AKASH",
+    "2031": "SUBHASH",
+    "2032": "SIRAJUDDIN",
+    "2033": "ZUBAR KHAN",
+    "2034": "NEERAJ KUMAR",
+    "2035": "SULENDER",
+    "2036": "ANKIT",
+    "2037": "MD NASEER",
+    "2038": "AMAR  ",
+    "2039": "ALI HUSAIN",
+    "2040": "VIKAS KUMAR",
+    "2041": "FARUKH",
+    "2042": "JAGMOHAN",
+    "2043": "RAJ BIR",
+    "2044": "MONI",
+    "2045": "ANIL KUMAR",
+    "2046": "GAFAR",
+    "2047": "VIJAY KUMAR GUPTA",
+    "2048": "BANTI",
+    "2049": "AMAR SINGH RANA",
+    "2050": "VISHAL RATHI",
+    "2051": "TARUN KUMAR",
+    "2052": "BHUDEV SINGH",
+    "2053": "IMRAN KHAN",
+    "2054": "AMIT KUMAR",
+    "2055": "RAHISUDDIN",
+    "2056": "DHAN RAJ",
+    "2057": "MD AMIR",
+    "2058": "SACHIN KUMAR",
+    "2059": "CHARANJEET SHARMA",
+    "2060": "CHAND RAM",
+    "2061": "RAJAN",
+    "2062": "ABHIJEET SINGH",
+    "2063": "NITESH KUMAR",
+    "2064": "AMIT KASANA",
+    "2065": "PRAKASH  ",
+    "2066": "DESRAJ SINGH",
+    "2067": "AKSHAY BANSAL",
+    "2068": "VEER SINGH",
+    "2069": "AJAY KUMAR",
+    "2070": "HASRAT",
+    "2071": "RAJINDER KUMAR",
+    "2072": "AMIT CHAUHAN",
+    "2073": "KARAN  ",
+    "2074": "SUNIL KUMAR VERMA",
+    "2075": "SAHIB SINGH",
+    "2076": "VISHAL KUMAR",
+    "2077": "PRADEEP KUMAR",
+    "2078": "GAUTAM KHATRI",
+    "2079": "LAKHU CHOUDHARY",
+    "2080": "INDERJEET",
+    "2081": "SANJAY KUMAR",
+    "2082": "YASHVEER",
+    "2083": "RAKESH",
+    "2084": "VICKY",
+    "2085": "D K DUDEY",
+    "2086": "GURU CHARAN SINGH",
+    "2087": "KAMAL KASHYAP",
+    "2088": "KHEM CHAND  ",
+    "2089": "HARSH",
+    "2090": "OMKAR SINGH",
+    "2091": "ARUN KUMAR",
+    "2092": "SUHAIL",
+    "2093": "ANKIT KUMAR",
+    "2094": "SHIRI CHAND",
+    "2095": "AYYUB",
+    "2096": "MOHD INTJAR",
+    "2097": "MONISH",
+    "2098": "SATENDER",
+    "2099": "JITIN",
+    "2100": "JAI PRAKASH",
+    "2101": "ANSHUL",
+    "2102": "HARISH KUMAR  ",
+    "2103": "BALDEV SINGH",
+    "2104": "SANJEEV KR SINGH",
+    "2105": "RAJESH",
+    "2106": "CHETAN BENSON",
+    "2107": "ANKIT",
+    "2108": "VIPIN KUMAR ",
+    "2109": "PREM NARAYAN",
+    "2110": "RAJESH KUMAR MISHRA",
+    "2111": "DHIRAJ SEHGAL",
+    "2112": "NAFFES",
+    "2113": "AMAN",
+    "2114": "RAM PHOOL",
+    "2115": "SANDEEP KUMAR",
+    "2116": "SHUBHAM",
+    "2117": "JITENDER KUMAR",
+    "2118": "MAHESH KUMAR",
+    "2119": "DEEPAK KUMAR",
+    "2120": "SHADAB",
+    "2121": "SHRI KRISHAN",
+    "2122": "DEEPAK KUMAR",
+    "2123": "RAHUL",
+    "2124": "RAM KISHORE",
+    "2125": "VIJAY PRASAD",
+    "2126": "RAKESH",
+    "2127": "GURMEET SINGH",
+    "2128": "TILAK RAJ",
+    "2129": "SANJAY SHARMA",
+    "2130": "MOHD TAYYAB",
+    "2131": "ANURAG YADAV",
+    "2132": "KASIM AHMED",
+    "2133": "JAI SINGH",
+    "2134": "MANOJ KUMAR",
+    "2135": "GAURAV KUMAR",
+    "2136": "SOHAN LAL",
+    "2137": "RAJBIR SINGH",
+    "2138": "RAVINDER KUMAR SHARMA",
+    "2139": "MOHD IMTYAZ",
+    "2140": "PRADEEP KUMAR",
+    "2141": "VINEET KUMAR",
+    "2142": "SHAHID",
+    "2143": "PARMOD KUMAR",
+    "2144": "ACHHE LAL",
+    "2145": "MOHD AAMIL",
+    "2146": "JITENDER SINGH",
+    "2147": "VISHWA NATH",
+    "2148": "BANTI",
+    "2149": "SATENDRA KUMAR",
+    "2150": "ARUN KUMAR",
+    "2151": "PRAVESH KUMAR JAIJAN ",
+    "2152": "MOHD IRFAN",
+    "2153": "RAKESH KUMAR ",
+    "2154": "AJAY KUMAR",
+    "2155": "UMESH KUMAR",
+    "2156": "PRADEEP KUMAR",
+    "2157": "TEK CHAND",
+    "2158": "HARISH CHAND",
+    "2159": "RAJ KUMAR ",
+    "2160": "DHARAMVIR SINGH",
+    "2161": "AMAN KUMAR",
+    "2162": "ARVIND KUMAR",
+    "2163": "MUNENDRA KUMAR",
+    "2164": "ARIF",
+    "2165": "OM BABU",
+    "2166": "RAM CHARAN",
+    "2167": "AMIT KUMAR",
+    "2168": "HEERA LAL",
+    "2169": "MANOJ KUMAR",
+    "2170": "MANOJ KUMAR",
+    "2171": "FAIZAN MALIK",
+    "2172": "GAURAV  ",
+    "2173": "SATVEER SINGH",
+    "2174": "VINOD KUMAR",
+    "2175": "RANJAN",
+    "2176": "SALIM KHAN ",
+    "2177": "AAMIR KHAN ",
+    "2178": "SUMAN PAL",
+    "2179": "SANJAY KUMAR",
+    "2180": "TAHIR ALI ",
+    "2181": "HARI SHANKAR",
+    "2182": "YOGESH",
+    "2183": "jauhari singh",
+    "2184": "AFTAB AHMED",
+    "2185": "PARVEEN KUMAR ",
+    "2186": "AASHU",
+    "2187": "MOHD ADIL KHAN",
+    "2188": "ADITYA ",
+    "2189": "YOGESH KUMAR",
+    "2190": "SATPAL",
+    "2191": "RAHMAT ALI",
+    "2192": "BHAI SAHAB",
+    "2193": "AJAY KUMAR",
+    "2194": "DEEPAK CHOUDHARY",
+    "2195": "PRAHLAD",
+    "2196": "SHRI KRISHAN",
+    "2197": "RINKU",
+    "2198": "MUKESH ",
+    "2199": "RAHMAT ALI",
+    "2200": "NAGESH KR YADAV",
+    "2201": "RAKESH KUMAR",
+    "2202": "AMIT KUMAR",
+    "2203": "GAJENDAR",
+    "2204": "SURENDER SINGH",
+    "2205": "SURJEET KUMAR",
+    "2206": "ARIF KHAN",
+    "7001": "NEETU",
+    "7002": "MOHSIN",
+    "7003": "SAMEEM",
+    "7004": "ANWAR",
+    "7005": "ARVIND SINGH",
+    "7006": "NITESH KUMAR",
+    "7007": "SHAHID AHAMAD",
+    "7008": "SHANNY TOMAR",
+    "7009": "DHARMENDER DAHIYA",
+    "7010": "ANUJ KUMAR",
+    "7011": "FAISHAL ALI",
+    "7012": "TILAKRAJ SEJWAL",
+    "7013": "ARJUN KUMAR",
+    "7014": "ANKIT GOEL",
+    "7015": "ANKIT YADAV",
+    "7016": "KULDEEP ",
+    "7017": "AMIT KUMAR",
+    "7018": "ASHUDEEN",
+    "7019": "DAL CHAND",
+    "7020": "MOHD.HARUN",
+    "7021": "RAKESH SAGAR",
+    "7022": "RAJEEV",
+    "7023": "ANEES AHMED",
+    "7024": "WASIM ALAM",
+    "7025": "AAS MOHAMMAD",
+    "7026": "ABBAS AHMED",
+    "7027": "BITTU",
+    "7028": "AMIT PRATAP SINGH",
+    "7029": "PARDEEP KUMAR",
+    "T530/1845": "ASLAM",
+    "7031": "HARENDRA SINGH",
+    "7032": "ARVIND KUMAR",
+    "7033": "JULFEEKAR",
+    "7034": "ORANGZEB KHAN",
+    "7035": "BHUPENDER KUMAR",
+    "7036": "KRISHAN PAL",
+    "7037": "JASPAL PASS",
+    "7038": "ANIL TOMAR",
+    "7039": "MOHD ISMAIL",
+    "7040": " PRADEEP KUMAR ",
+    "7041": "SUDEEP KUAMR",
+    "7042": "ASHOK KUAMR",
+    "7043": "SURESH PAL",
+    "7044": "ANIL KUAMR",
+    "7045": "SHALNDRA",
+    "7046": "MUKESH KUMAR",
+    "7047": "SAJID ALI",
+    "7048": "USMAN HUSAIN",
+    "7049": "BOBY SINGH",
+    "7050": "SHAMIM ALAM",
+    "7051": "ARIF ALI",
+    "7052": "RAJU YADAV",
+    "7053": "GIRAJASHANKAR",
+    "7054": "BOBY KUMAR",
+    "7055": "KAMLESH KUMAR YADAV",
+    "7056": "OMBIR SINGH ",
+    "7057": "VINOD KUMAR",
+    "7058": "NISAR",
+    "7059": "ASHOK KUMAR",
+    "7060": "MOHD USMAN ALI ",
+    "7061": "LUKAMAN ",
+    "7062": "KASHIF KHAN",
+    "7063": "SUDHANSHU SINGH",
+    "7064": "ATUL",
+    "7065": "JASMINDER",
+    "7066": "MUMTAJ ALI",
+    "7067": "NITESH KUMAR",
+    "7068": "PARDEEP KUMAR",
+    "7069": "RASHPAL",
+    "7070": "HARIOM",
+    "7071": "NOOR HASAN",
+    "7072": "ASHISH",
+    "7073": "RAJESH",
+    "7074": "SOVENDRA PAL",
+    "7075": "MD. ALAM",
+    "7076": "UMEED",
+    "7077": "JAYVIR",
+    "7078": "ABRAR AHAMAD",
+    "7079": "TRIBHUWAN",
+    "7080": "RAVI KUMAR",
+    "7081": "ZAMIR",
+    "7082": "ASHOK KUMAR",
+    "7083": "SACHIN JAIN",
+    "7084": "DHARMENDER SINGH.R",
+    "7085": "RAJ KUMAR MISHRA",
+    "7086": "OM PRAKASH",
+    "7087": "TAJ MOHAMMAD",
+    "7088": "IRFAN",
+    "7089": "KRISHANPAL SINGH",
+    "7090": "KULDEEP SINGH",
+    "7091": "AMIR KHAN",
+    "7092": "SANDEEP KUMAR",
+    "7093": "PARVESH",
+    "7094": "FAIYAJ KHAN",
+    "7095": "KIRANPAL SINGH",
+    "7096": "SAURABH",
+    "7097": "MANOJ KUMAR",
+    "7098": "JITENDRA KUMAR",
+    "7099": "RISHIPAL",
+    "7100": "RAJ KUMAR ",
+    "7101": "KRISHAN PAL",
+    "7102": "KRISHAN PANCHAL ",
+    "7103": "VIVESH KUMAR",
+    "7104": "SAMEER KHAN",
+    "7105": "SANTOSH",
+    "7106": "NARENDER KUMAR",
+    "7107": "DINESH GIRI ",
+    "7108": "DEVENDER SINGH",
+    "7109": "PARVEEN KUMAR",
+    "7110": "MANOJ KUMAR",
+    "7111": "DEVENDER KUMAR ",
+    "7112": "VINOD KUMAR",
+    "7113": "SURESH PAL",
+    "7114": "VIRENDRA SINGH",
+    "7115": "ROVIN KUMAR",
+    "7116": "VIRENDER SINGH ",
+    "7117": "SOHANPAL SINGH",
+    "7118": "SANJAY KUMAR",
+    "7119": "VINOD KUMAR",
+    "7120": "DEEPAK KUMAR",
+    "7121": "AJIT SINGH",
+    "7122": "SATYAVEER SINGH",
+    "7123": "SHAHSAD",
+    "7124": "VIPIN KUMAR",
+    "7125": "ATUL KUMAR",
+    "7126": "ANIL KUMAR",
+    "7127": "PAWAN KUMAR",
+    "7128": "RAHUL KUMAR",
+    "7129": "SAJJAD ALI",
+    "7130": "ASHOK KUMAR AWASTHI",
+    "7131": "MOHIT KUMAR",
+    "7132": "SUBHASH CHANDRA",
+    "7133": "MOHD NAKI",
+    "7134": "PRADEEP KUMAR",
+    "7135": "SURENDRA VERMA",
+    "7136": "VED PRAKASH",
+    "7137": "NEETU",
+    "7138": "CHARAN SINGH",
+    "7139": "MOHD ISRAR",
+    "7140": "PRAMOD KUMAR",
+    "7141": "PRADEEP KUMAR",
+    "7142": "SUNIL NAGAR",
+    "7143": "AMIT",
+    "7144": "RAJPAL SINGH",
+    "7145": "DINESH SINGH",
+    "7146": "RAJESH KUMAR",
+    "7147": "AJAY KUMAR",
+    "7148": "MOHIT KUMAR",
+    "7149": "SHER SINGH",
+    "7150": "DEEPAK KUMAR",
+    "7151": "SHIV KUMAR",
+    "7152": "RUPESH KUMAR",
+    "7153": "SANJEEV KUMAR",
+    "7154": "JASVEER SINGH",
+    "7155": "BRIJESH",
+    "7156": "JANVED KUAMR",
+    "7157": "RAMESH",
+    "7158": "DAUJI",
+    "7159": "SULTAN MOHD.",
+    "7160": "ANUJ GIRI",
+    "7161": "MEHTAB ALI",
+    "7162": "MUNESH",
+    "7163": "MANISH",
+    "7164": "RAHUL ROUSHA",
+    "7165": "JITENDRA KUMAR",
+    "7166": "SURENDRA KUMAR",
+    "7167": "VIPIN KUMAR",
+    "7168": "SURESH KUMAR",
+    "7169": "FURKAN",
+    "7170": "UMESH KUMAR VERMA",
+    "7171": "PHOOL CHAND",
+    "7172": "PRAVESH KUMAR",
+    "7173": "MANOJ KUMAR",
+    "7174": "VIKAS KUMAR",
+    "7175": "DEEPAK KUMAR",
+    "7176": "RAJ KUMAR ",
+    "7177": "RAKESH KUMAR SHARMA",
+    "7178": " SATISH CHAND",
+    "7179": "JUMMAN",
+    "7180": "UMESH TYAGI ",
+    "7181": "DILIP KUMAR",
+    "7182": "GANGA PARSAD",
+    "7183": "ROHTASH KUMAR",
+    "7184": "PARVESH ",
+    "7185": "SHWETANK",
+    "7186": "SANJAY SHARMA",
+    "7187": "SATISH KUMAR ",
+    "7188": "VIPIN",
+    "7189": "KRISHAN",
+    "7190": "VIPIN KUMAR",
+    "7191": "PARDEEP KUMAR.G",
+    "7192": "SATENDRA K SINGH",
+    "7193": "DEEPAK",
+    "7194": "NITIN TYAGI",
+    "7195": "DEEPAK SINGH",
+    "7196": "MADAN YADAV",
+    "7197": "VIJAY KUMAR",
+    "7198": "RAGHBENDER SINGH",
+    "7199": "KAMAR AHMAD",
+    "7200": "ISRAR",
+    "7201": "MOHD ARSHAD",
+    "7202": "JITENDER KUMAR",
+    "7203": "MAHENDER PARATAP SINGH",
+    "7204": "MOHD.NAIM",
+    "7205": "SAZID ",
+    "7206": "MOMIN",
+    "7207": "NAGISH KUMAR CHOUBEY",
+    "7208": "SATISH CHAND SHARMA",
+    "7209": "MOHAMMAD FAHEEM",
+    "7210": "SHANE ALAM",
+    "7211": "SONU KASSAR",
+    "7212": "JOGENDER SINGH SAINI ",
+    "7213": "JITENDRA KUMAR",
+    "7214": "FIROJ MALIK",
+    "7215": "RAJEEV KRISHAN SHASTRI",
+    "7216": "MEHTAB ",
+    "7217": "ABDUL RAUF",
+    "7218": "MOHD NAVAB",
+    "7219": "YAKAB",
+    "7220": "GULFAM",
+    "7221": "AKRAM",
+    "7222": "AFSAR",
+    "7223": "MAUSIN",
+    "7224": "MAHRAJUDDIN",
+    "7225": "NAZIM",
+    "7226": "YAMEEN MALIK",
+    "7227": "BADLU SINGH",
+    "7228": "SANJEEV KUMAR",
+    "7229": "ANURAG",
+    "7230": " VIKASH KUMAR",
+    "7231": "PRAVEEN KUMAR",
+    "7232": "CHARAN SINGH",
+    "7233": "SHALU SHARMA",
+    "7234": "ANIL KUMAR",
+    "7235": "GREES CHANDRA",
+    "7236": "MOHD.SALMAN",
+    "7237": "NAFEES AHEMAD",
+    "7238": "MOHD FURKAN",
+    "7239": "RAKESH KUMAR",
+    "7240": "SURESH YADAV",
+    "7241": "RAHUL GANDHI",
+    "7242": "SHAILESH KUMAR N",
+    "7243": "SATISH",
+    "7244": "SHIVRAJ SINGH",
+    "7245": "BHUPENDRA ",
+    "7246": "ASHOK KUMAR",
+    "7247": "BALJEET SINGH",
+    "7248": "BITTU ",
+    "7249": "DEEPAK KUMAR",
+    "7250": "VIPIN KUMAR",
+    "7251": "RAVINDRA KUMAR",
+    "7252": "KAYYUM",
+    "7253": "MOHAMMAD ALI",
+    "7254": "TEJ PAL",
+    "7255": "ZAHID KHAN",
+    "7256": "PRAVEEN KUMAR",
+    "7257": "SUDHEER KASHYAP",
+    "7258": "PRADEEP KUMAR",
+    "7259": "SONU ",
+    "7260": "MONU",
+    "7261": "SALEEM",
+    "7262": "PRAMOD KUMAR",
+    "7263": "JITENDRA SINGH",
+    "7264": "SURAJ",
+    "7265": "DEVENDRA",
+    "7266": "SANJEEV KUMAR",
+    "7267": "IRSHAD KHAN",
+    "7268": "RAJU",
+    "7269": "VIPIN KUMAR",
+    "7270": "DHIRENDRA KUMAR",
+    "7271": "RAJEEV KUMAR",
+    "7272": "VIKAS KUMAR",
+    "7273": "NARENDAR SINGH",
+    "7274": "RISHI PAL",
+    "7275": " DHARMENDRA SINGH",
+    "7276": "AMIT KUMAR",
+    "7277": "BHUPENDRA SINGH",
+    "7278": "KUNWAR JAVED",
+    "7279": "KARTIK CHAUDHARY",
+    "7280": "NAEEM KHAN",
+    "7281": "DHEERAJ",
+    "7282": "RAM PAL",
+    "7283": "LAXMAN SINGH",
+    "7284": "YOGESH KUMAR",
+    "7285": "RAJ KUMAR",
+    "7286": "SACHIN KUMAR",
+    "7287": "PARAGAT SINGH",
+    "7288": "SUDHIR SHARMA",
+    "7289": "SAILENDER GIRI",
+    "7290": "SHIV KUMAR",
+    "7291": "PRADEEP KUMAR",
+    "7292": "VIVEK DHAMA",
+    "7293": "BHAVNISH KUMAR",
+    "7294": "ROHIT KUMAR",
+    "7295": "AJAY KUMAR SINGH",
+    "7296": "ASHOK KUMAR",
+    "7297": "RAVINDER",
+    "7298": "VIKRANT DHAMA",
+    "7299": "ASIF",
+    "7300": "MANISH KUMAR",
+    "7301": "SUMIT KUMAR",
+    "7302": "PARDEEP KUMAR",
+    "7303": "MOHD ASHUDEEN",
+    "7304": "RAHUL TYAGI",
+    "7305": "CHANDER PAL",
+    "7306": "SUMESH ",
+    "7307": "DIVYANAND SHARMA",
+    "7308": "AVDASH KUMAR ",
+    "7309": "MOHD NIYAJ KHAN",
+    "7310": "SURENDER SINGH",
+    "7311": "SUMIT VERMA",
+    "7312": "SHRI RAM",
+    "7313": "VED PARKASH",
+    "7314": "MANOJ KUMAR ",
+    "7315": "NITENDERA KUMAR",
+    "7316": "VIKASH KUMAR",
+    "7317": "JAMEEL",
+    "7318": "ATAL SINGH",
+    "7319": "PRAVBAJ KUMAR",
+    "7320": "BHUSHAN GOSWAMI",
+    "7321": "ANIL KUMAR",
+    "7322": "RAM NIWAS",
+    "7323": "SUNDER LAL",
+    "7324": "OMBEER SINGH",
+    "7325": "RAVI KUMAR",
+    "7326": "LAVKUSH",
+    "7327": "SUBHASH ",
+    "7328": "BHUPENDER SINGH",
+    "7329": "SANDEEP KUMAR",
+    "7330": "TEJBIR",
+    "7331": "JITENDRA KUMAR",
+    "7332": "ROOP SINGH",
+    "7333": "DEEPAK PATHAK",
+    "7334": "RISHI KUMAR",
+    "7335": "NASIR ALI",
+    "7336": "NEERAJ KUMAR TYAGI",
+    "7337": "ABDUL JABBAR",
+    "7338": "HARSESH KUMAR",
+    "7339": "NARENDRA SINGH",
+    "7340": "MEHRUDDIN",
+    "7341": "SUNIL KUMAR",
+    "7342": "SUNNY PANWAR",
+    "7343": "MOHAN",
+    "7344": "MUKESH KUMAR",
+    "7345": "DHARMENDRA SINGH",
+    "7346": "MANOJ",
+    "7347": "SATISH KUMAR ",
+    "7348": "SIKANDER",
+    "7349": "SANJAY KUMAR PRAJAPATI",
+    "7350": "MONU SAINI ",
+    "7351": "SONU SAINI",
+    "7352": "SACHIN KUMAR",
+    "7353": "AJAY VEER SINGH",
+    "7354": "RAJAN SHARMA",
+    "7355": "CHANDRA PRAKASH",
+    "7356": "DINESH KUMAR",
+    "7357": "PAWAN SHARMA",
+    "7358": "MUNESH KUMAR",
+    "7359": "FALIX JAMES",
+    "7360": "MOHAMMAD SHAHJAD",
+    "7361": "DHERENDRA SINGH",
+    "7362": "RAVI KUMAR",
+    "7363": "SONU",
+    "7364": "SHARIF KHAN",
+    "7365": "ARUN KUMAR",
+    "7366": "JITENDRA",
+    "7367": "MONU",
+    "7368": "RAJESH KUMAR ",
+    "7369": "NITIN KUMAR",
+    "7370": "TEJVIR SINGH",
+    "7371": "VIKASH KUMAR",
+    "7372": "ANKIT VERMA",
+    "7373": "SANDEEP",
+    "7374": "VINAY KUMAR",
+    "7376": "ANIL",
+    "7377": "SHAH NAWAJ",
+    "7378": "KARTAR SINGH",
+    "7379": "ASHOK KUMAR",
+    "7380": "AADESH KUMAR",
+    "7381": "SAJIB",
+    "7382": "DEEPAK KUMAR",
+    "7383": "PRABHAT KUMAR",
+    "7384": "ROHIT KUMAR",
+    "7385": "MOHD. YOUSUF",
+    "7386": "SANDEEP KUMAR",
+    "7387": "VEDPAL SINGH",
+    "7388": "NAKUL CHANDIWAL",
+    "7389": "NARESH KUMAR",
+    "7390": "SHRI KANT SHARMA",
+    "7391": "SUNIL KUMAR",
+    "7392": "MOHD. IRSHAD AHMAD",
+    "7393": "SUNIL KUMAR",
+    "7394": "BRAJESH KUMAR",
+    "7396": "ASHARFI LAL",
+    "7398": "RAKESH",
+    "7399": "ARVIND",
+    "7400": "KAPIL MEENA",
+    "7401": "RAJENDRA SINGH MAAN",
+    "7402": "SUNIL KUMAR",
+    "7403": "JITENDRA SINGH",
+    "7404": "MANISH TYAGI",
+    "7405": "ADITYA KUMAR SINGH",
+    "7406": "JONI",
+    "7407": "ABDUL REHMAM",
+    "7408": "BANTU KUMAR",
+    "7409": "PINTU KASHYAP",
+    "7410": "SANDEEP SINGH",
+    "7411": "AJAY KUMAR/JOIN DTC",
+    "7412": "UPENDRA KUMAR",
+    "7413": "DEEPAK",
+    "7414": "KOMIL SINGH",
+    "7415": "LALIT TANWAR",
+    "7416": "UPENDRA KUMAR",
+    "7417": "ANIL KUMAR",
+    "7418": "FARAD CHAUDHARY",
+    "7419": "AMIT KUMAR",
+    "7420": "SONU",
+    "7421": "RODASH",
+    "7422": "CHANDRA PAL SINGH",
+    "7423": "ASHOK SINGH",
+    "7424": "VINOD KUMAR SINGH",
+    "7425": "YOGESH",
+    "7426": "DEEPAK SHARMA",
+    "7427": "ADESH KUMAR",
+    "7428": "TARUN KUMAR",
+    "7429": "ANIL KUMAR",
+    "7430": "DEVENDRA KUMAR",
+    "7431": "KANAK SINGH",
+    "7432": "AJAY KUMAR",
+    "7433": "SUNNY KUMAR",
+    "7434": "AMIT MALIK",
+    "7435": "BHUPENDER SINGH",
+    "7436": "DINESH KUMAR",
+    "7437": "IRFAN",
+    "7438": "SUMAN SINGH",
+    "7439": "SANDEEP KUMAR",
+    "7440": "BHUSHAN SINGH",
+    "7441": "SACHIN KUMAR",
+    "7442": "RUBAL PANWAR",
+    "7443": "AJEET SINGH",
+    "7444": "GORAV ",
+    "7445": "DEVENDRA KUMAR",
+    "7446": "PRAVENDRA KUMAR",
+    "7447": "HEERA LAL CHAUHAN",
+    "7448": "NAVEEN KUMAR",
+    "7449": "VIRENDRA KUMAR",
+    "7450": "NARENDRA KUMAR SINGH",
+    "7451": "SHOKIN",
+    "7452": "MASARRT ALI",
+    "7453": "RAKESH KUMAR",
+    "7454": "ASHOK",
+    "7455": "SATISH KUMAR ",
+    "7456": "AMIT",
+    "7457": "ABHISHEK KUMAR SINGH",
+    "7458": "ANIL PAWAR",
+    "7459": "DEVENDER KUMAR",
+    "7460": "NITIN SHARMA",
+    "7461": "RAVINDRA KUMAR",
+    "7462": "NITESH KUMAR",
+    "7463": "NAVRATAN PAL",
+    "7464": "SOMBIR",
+    "7465": "MANISH KUMAR",
+    "7466": "KHAN MOHD",
+    "7467": "RAHUL SINGH BAGHEL",
+    "7468": "CHETAN LAMBA",
+    "7469": "TANVER",
+    "7470": "RUPENDRA SINGH",
+    "7471": "INDERJEET SINGH",
+    "7472": "GOVINDA",
+    "7473": "DINESH YADAV",
+    "7474": "RAVI KUMAR",
+    "7475": "SUNIL SINGH BHADAURIYA",
+    "7476": "DHARMENDRA SINGH",
+    "7477": "MANISH KUMAR UPADDYAY",
+    "7478": "SANJAY KUMAR",
+    "7479": "TIM RAJ ",
+    "7480": "VIJAY KUMAR",
+    "7481": "NITIN KUMAR",
+    "7482": "SACHIN KUMAR",
+    "7483": "AMIT DHAIYA ",
+    "7484": "NARENDRA KUMAR ",
+    "7485": "RADHEY SHYAM CHAUHAN",
+    "7486": "AMIT",
+    "7487": "VIPIN",
+    "7488": "VIKASH YADAV",
+    "7489": "ABHISHEK KUMAR YADAV",
+    "7490": "SIKANDAR PAL",
+    "7491": "SHAN MOHD.",
+    "7492": "PARAMJEET ",
+    "7493": "ANUJ",
+    "7494": "AJAY KUMAR YADAV",
+    "7495": "ADITYA SAXENA",
+    "7496": "ISRAIL",
+    "7497": "DILSHAD",
+    "7498": "MOHD FARHAN ANSARI",
+    "7499": "VIRENDER LAL",
+    "7500": "VIJAY BABOO",
+    "7501": "YATISH KUMAR",
+    "7502": "PARVEEN KUMAR",
+    "7503": "VED VEER SINGH",
+    "7504": "SANJAY KUMAR",
+    "7505": "SURAJ",
+    "7506": "RAJ KUMAR",
+    "7507": "ANUJ KUMAR",
+    "7508": "GURDIP",
+    "7509": "MANOJ KUMAR",
+    "7510": "VINEET KUMAR",
+    "7511": "SOHAN BIR SHARMA",
+    "7512": "SOMVEER SINGH",
+    "7513": "INTJAR",
+    "7514": "SATISH KUMAR ",
+    "7515": "NEERAJ",
+    "7516": "RAM P SHAKYA",
+    "7517": "SANJEEV DEDHA",
+    "7518": "VIVEK KUMAR",
+    "7519": "RAVINDER KUMAR",
+    "7520": "DHARM SINGH",
+    "7521": "AMIT KUMAR",
+    "7522": "SALEEM KHAN",
+    "7523": "VINAY MISHRA",
+    "7524": "NEERAJ KUMAR",
+    "7525": "MOHD HASHIM",
+    "7526": "SUBHASH CHANDRA PANWAR",
+    "7527": "GAURAV KUMAR",
+    "7528": "ROHIT KUMAR",
+    "7529": "ROHIT KUMAR",
+    "7530": "VIJAY MALIK",
+    "7531": "SACHIN",
+    "7532": "SARVESH KUMAR",
+    "7533": "AMIR SUHAIL",
+    "7534": "RAKESH KUMAR PIPLODA",
+    "7535": "AMIT KUMAR",
+    "7536": "RAUKY",
+    "7537": "KRISHAN NAGAR",
+    "7538": "ANIL KUMAR",
+    "7539": "NAUSHAD ",
+    "7540": "PARVEEN KUMAR TYAGI",
+    "7541": "VIKASH MANN",
+    "7542": "OMPAL SHARMA",
+    "7543": "SHAMIM KHAN ",
+    "7544": "JITENDRA KUMAR",
+    "7545": "RAJENDRA PRASAD",
+    "7546": "VIPIN KUMAR",
+    "7547": "SUNIL KUMAR",
+    "7548": "KAPIL",
+    "7549": "SATENDRA SINGH",
+    "7550": "BAJRANGI LAL VERMA",
+    "7551": "SANDEEP PANWAR",
+    "7552": "JAN MOHAMMAD",
+    "7553": "INDRA PRATAP SINGH",
+    "7554": "NEERAJ KUMAR",
+    "7555": "ANUJ KUMAR",
+    "7556": "SADDAM ALI",
+    "7557": "MOHD RASID",
+    "7558": "BRAJ KISHOR",
+    "7559": "NAGENDRA",
+    "7560": "TARUN PRAKASH VASHISHTH",
+    "7561": "SUGAMAN KUMAR",
+    "7562": "DINESH PRASAD",
+    "7563": "SANDEEP KUMAR",
+    "7564": "SUKRAMPAL",
+    "7565": "SURYA MANI MISHRA",
+    "7566": "ANIL KUMAR MEENA",
+    "7567": "NITIN KUMAR",
+    "7568": "YOGESH TOMAR",
+    "7569": "NAGENDRA KUMAR",
+    "7570": "YOGESH BHARDWAJ",
+    "7571": "VINAY",
+    "7572": "ANKIT MALIK",
+    "7573": "DAVENDRA SINGH YADAV",
+    "7574": "MANOJ KUMAR ",
+    "7575": "BIJENDER SINGH",
+    "7576": "BIJENDRA SINGH",
+    "7577": "AMOD ",
+    "7578": "SARAFAT ALI",
+    "7579": "TAUSEEF ",
+    "7580": "ATIBAL SINGH PAL",
+    "7581": "MANOJ DOLI",
+    "7582": "ANKUR KUMAR",
+    "7583": "RACHIT ",
+    "7584": "INDRA JEET MAURYA",
+    "7585": "VIPIN KUMAR",
+    "7586": "NARENDER SINGH RATHI",
+    "7587": "MUKRRAM",
+    "7588": "VIKASH KUMAR",
+    "7589": "ARSAD ALI",
+    "7590": "ROHIT CHAUDHARY",
+    "7591": "MAHESH CHAND MEENA",
+    "7592": "HARI MOHAN",
+    "7593": "VIJAY SINGH",
+    "7594": "ROHTASH",
+    "7595": "ANUJ KUMAR",
+    "7596": "NAJAR ABBAS",
+    "7597": "RAJU ",
+    "7598": "DEEPAK KUMAR",
+    "7599": "VINOD KUMAR",
+    "7600": "VINAY KUMAR",
+    "7601": "ROOPENDRA KUMAR",
+    "7602": "BHAGWAN SINGH",
+    "7603": "ASHOK KUMAR",
+    "7604": "AKHIL RANA",
+    "7605": "DHANVEER SINGH",
+    "7606": "YOGESH SINGH",
+    "7607": "BHUPENDRA",
+    "7608": "MOHD FARID KHAN",
+    "7609": "SATYA PRAKASH",
+    "7610": "SURAJ KUMAR",
+    "7611": "PRAMOD SINGH KUSHWAH",
+    "7612": "AKASH MISHRA",
+    "7613": "SHADAB KHAN",
+    "7614": "BOBY KUMAR",
+    "7615": "AMIT KUMAR SHIRIVAS",
+    "7616": "AMIT KUMAR",
+    "7617": "PRAKASH CHANDRA",
+    "7618": "RAJA KR MONDAL",
+    "7619": "MOHD IRFAN",
+    "7620": "PANKAJ",
+    "7621": "SRI PRAVESH",
+    "7622": "MANISH",
+    "7623": "SACHIN KUMAR",
+    "7624": "VINOD KUMAR",
+    "7625": "PANKAJ KUMAR",
+    "7626": "DINESH KUMAR",
+    "7627": "MOHD ATEEQ",
+    "7628": "SARBJIT SINGH",
+    "7629": "SANDEEP KUMAR",
+    "7630": "KAMAL SINGH",
+    "7631": "PANCHDEV SINGH",
+    "7632": "AMIT KUMAR",
+    "7633": "PINTU",
+    "7634": "NARESH KUMAR",
+    "7635": "BALIHAR SINGH",
+    "7636": "ARUN",
+    "7637": "HEMRAJ GURJAR",
+    "7638": "RANJEET SINGH",
+    "7639": "DEEPAK KASHYAP",
+    "7640": "BANTI SINGH",
+    "7641": "BABLU",
+    "7642": "MAHESH CHANDRA",
+    "7643": "BALWAN",
+    "7644": "HARPREET SINGH",
+    "7645": "SUBHAN",
+    "7646": "KULDEEP SOLANKI",
+    "7647": "SHEKHAR SINGH",
+    "7648": "SATISH KUMAR ",
+    "7649": "GAURAV MAAN",
+    "7650": "VIKRAM",
+    "7651": "RAJAT CHOUDHARY",
+    "7652": "SACHIN KUMAR",
+    "7653": "VAJID",
+    "7654": "MAHESH KUMAR",
+    "7655": "SOMINDER SINGH",
+    "7656": "MANOJ RANA",
+    "7657": "PUNEET KUMAR",
+    "7658": "KHESHAV KUMAR",
+    "7659": "SHIV KUMAR",
+    "7660": "UMESH KUMAR",
+    "7661": "VISHAL",
+    "7662": "AMRIK SINGH",
+    "7663": "PREM SHANKAR",
+    "7664": "PRADEEP SINGH",
+    "7665(debarred)": "RAHUL",
+    "7666": " SAURABH KUMAR",
+    "7667": "VIRENDER KUMAR",
+    "7668": "VIKASH",
+    "7669": "DEVENDRA KUMAR",
+    "7670": "KAMAL",
+    "7671": "VIPUL",
+    "7672": "AKASH MALIK",
+    "7673": "MANISH KUMAR DHANKED",
+    "7674": "PANKAJ",
+    "7675": "RAM GOPAL",
+    "7676": "NITIN KUMAR",
+    "7677": "RAJESH KUMAR ",
+    "7678": "SANJAY KUMAR SINGH",
+    "7679": "DEEPAK",
+    "7680": "VINOD KUMAR",
+    "7681": "AASHU KASANA",
+    "7682": "SONU SHARMA",
+    "7683": "VIKAL ADHANA",
+    "7684": "LALIT KUMAR",
+    "7685": "MOHIT TOMAR",
+    "7686": "RAVI KUMAR CHAUHAN",
+    "7687": "RAJ KUMAR",
+    "7688": "RAVINDER TOMER",
+    "7689": "LOKESH KUMAR",
+    "7690": "SOURABH KUMAR",
+    "7691": "SURENDRA KUMAR",
+    "7692": "ABHISHESH KUMAR",
+    "7693": "MONU",
+    "7694": "ARUN KUMAR PARASHAR",
+    "7695": "MEER HASAN",
+    "7696": "INTKHAB HUSSAIN",
+    "7697": "ANUJ KUMAR",
+    "7698": "IRFAN",
+    "7699": "PRADEEP KASANA",
+    "7700": "DINESH KUMAR VERMA",
+    "7701": "VIVEK KUMAR",
+    "7702": "MONU KUMAR",
+    "7703": "ARJUN KUMAR",
+    "7704": "SALMAN",
+    "7705": "MUHAMMAD NASHEEM",
+    "7706": "PRAVEEN KUMAR",
+    "7707": "CHAUDHARY NAEEM TOMAR",
+    "7708": "SHIV KUMAR",
+    "7709": "AKSHAY TOMAR",
+    "7710": "GAURAV KUMAR",
+    "7711": "VINOD KUMAR",
+    "7712": "MUKESH KUMAR SENGAR",
+    "7713": "SAHAJAD KHAN",
+    "7714": "BACHANVEER SINGH",
+    "7715": "SOHAN KUMAR",
+    "7716": "SATTAR",
+    "7717": "SAURABH SHARMA",
+    "7718": "SANJEEV KUMAR",
+    "7719": "GULASHAN KUMAR",
+    "7720": "SHIVAM",
+    "7721": "AFZAL",
+    "7722": "SANDEEP KUMAR",
+    "7723": "SUDHIR KUMAR SHARMA",
+    "7724": "MOHD AMAN",
+    "7725": "CHHOTE SINGH",
+    "7726": "SAJID ALI",
+    "7727": "VMAR ALI",
+    "7728": "VISHNU KUMAR",
+    "7729": "MD RASHID",
+    "7730": "MOHD ASIF",
+    "7731": "SACHIN KUMAR",
+    "7732": "GAJENDRA SINGH",
+    "7733": "MOHD NAFIS",
+    "7734": "RAJIV KUMAR",
+    "7735": "BANWARI LAL",
+    "7736": "NAJIM",
+    "7737": "SANDEEP",
+    "7738": "PRAKASH CHAND ",
+    "7739": "VIKAL DHAMA",
+    "7740": "NARENDRA SINGH",
+    "7741": "PRAVEEN NAGAR",
+    "7742": "VIKAS ALIAS VIRENDER",
+    "7743": "AMIT PANWAR",
+    "7744": "RAJENDRA SINGH  ",
+    "7745": "MOHD TAHIR",
+    "7746": "LOKESH KUMAR SHARMA",
+    "7747": "SANJAY KAMAR",
+    "7748": "SOMDUTT TYAGI",
+    "7749": "VINOD KUMAR",
+    "7750": "ANKIT KUMAR",
+    "7751": "RAMKESH MEENA",
+    "7752": "DEEPAK KUMAR",
+    "7753": "ARUN KUMAR",
+    "7754": "SATISH KUMAR ",
+    "7755": "PAVAN KUMAR",
+    "7756": "ASHISH KUMAR",
+    "7757": "SHAHID ",
+    "7758": "DEEPAK KUMAR",
+    "7759": "HARISH SINGH RAVAT",
+    "7760": "MOHD SHAHNAWAZ",
+    "7761": "RAJ KUMAR SINGH",
+    "7762": "SANJAY SINGH",
+    "7763": "OM PAL SINGH",
+    "7764": "JITENDRA KUMAR",
+    "7765": "KHALID ALI KHAN",
+    "7766": "MUKESH KUMAR",
+    "7767": "MOHIT ",
+    "7768": "VIVEK KUMAR",
+    "7769": "VINOD KUMAR",
+    "7770": "SATISH KADIAN",
+    "7771": "SUBHASH",
+    "7772": "KAPIL KUMAR",
+    "7773": "VINAY SINGH",
+    "7774": "MUKESH KUMAR",
+    "7775": "RAJ BAHADUR",
+    "7776": "JITENDER ",
+    "7777": "DINESH",
+    "7778": "MANISH KUMAR",
+    "7779": "DEVENDER SINGH",
+    "7780": "VIJAY KUMAR SHARMA",
+    "7781": "GAJENDRA KUMAR",
+    "7782": "LOKESH KUMAR",
+    "7783": "VADMITRA",
+    "7784": "VIJENDRA",
+    ".": "ANKIT MALIK",
+    "7786": "VIKASH KUMAR",
+    "7787": "BHANU PRATAP",
+    "7788": "ROBIN KUMAR",
+    "7789": "RAM DHAN",
+    "7790": "ARUN KUMAR AWASTHI",
+    "7791": "JAMSHAID",
+    "7792": "SACHIN KUMAR",
+    "7793": "ADESH KUMAR",
+    "7794": "KARAN SINGH",
+    "7795": "JITENDRA KUMAR",
+    "7796": "SANJAY",
+    "7797": "SHAKTI KUMAR",
+    "7798": "MANOJ",
+    "7799": "IQBAL",
+    "7800": "HEMANT KUMAR",
+    "7801": "SANJAY KUMAR",
+    "7802": "MANOJ",
+    "7803": "NARESH KUMAR",
+    "7804": "AMAN SANGWAN",
+    "7805": "VIJAY CHANDRA",
+    "7806": "RAVINDRA  ",
+    "7807": "KAPIL DEV SEHRAWAT",
+    "7808": "SAMEER KHA",
+    "7809": "SANDEEP KUMAR",
+    "7810": "JITENDER KUMAR",
+    "7811": "BRAJBHUSHAN",
+    "7812": "ISMAIL",
+    "7813": "RAVI KUMAR",
+    "7814": "RAVINDRA SINGH",
+    "7815": "RAJVIR SINGH",
+    "7816": "DEEPAK",
+    "7817": "ALEEM KHAN",
+    "7818": "AADITYA",
+    "7819": "SONU KUMAR",
+    "7820": "SATENDRA SINGH",
+    "7821": "AZHARUDDIN",
+    "7822": "AMIT KUMAR SHARMA",
+    "7823": "RAVINDRA KUMAR",
+    "7824": "SANTOSH KUMAR",
+    "7825": "MAHESH KUMAR",
+    "7826": "VISHAL TYAGI",
+    "7827": "MOHD TALIB",
+    "7828": "DEEPAK KUMAR",
+    "7829": "SONU KUMAR",
+    "7830": "BIJENDRA KUMAR",
+    "7831": "VIKASH NAGAR",
+    "7832": "LOVE KUMAR",
+    "7833": "NAVEEN CHAUDHARY",
+    "7834": "HEMRAJ  ",
+    "7835": "DEVI RAM",
+    "7836": "SUMIT",
+    "7837": "LALIT KUMAR",
+    "7838": "HASIM ALI",
+    "7839": "ARJUN SINGH",
+    "7840": "VIKAS YADAV",
+    "7841": "RAHUL",
+    "7842": "PANKAJ KUMAR",
+    "7843": "MUKESH KUMAR",
+    "7844": "BHAGAT SINGH",
+    "7845": "ANKUR KUMAR",
+    "7846": "JAI SINGH YADAV",
+    "7847": "ANIL",
+    "7848": "GAURAV",
+    "7849": "DEEPAK BANSHKAR",
+    "7850": "SULTAN SINGH",
+    "7851": "FAISAL KHAN",
+    "7852": "MINTU KUMAR",
+    "7853": "NITENDRA",
+    "7854": "AKHIL KUMAR",
+    "7855": "MANOJ KUMAR",
+    "7856": "RAHUL SAXENA",
+    "7857": "ANIL KUMAR PANDEY",
+    "7858": "MANOJ KUMAR THAKUR",
+    "7859": "SUSHIL KUMAR",
+    "7860": "RAVINDRA KUMAR",
+    "7861": "YOGENDRA KUMAR",
+    "7862": "KAWALDEENALI",
+    "7863": "SUMIT KUMAR",
+    "7864": "AJEET SINGH",
+    "7865": "GOPAL SINGH RAWAT",
+    "7866": "MANOJ KUMAR",
+    "7867": "MOHD ABID",
+    "7868": "PRAMOD KUMAR",
+    "7869": "HIMANSHU",
+    "7870": "RANVEER",
+    "7871": "NARENDRA",
+    "7872": "KULDEEP GOSWAMI",
+    "7873": "SANTOSH KUMAR",
+    "7874": "JONI",
+    "7875": "DEVENDRA SINGH",
+    "7876": "KARTAR SINGH",
+    "7877": "MANOJ KUMAR",
+    "7878": "AMIT KUMAR",
+    "7879": "ANKIT KUMAR",
+    "7880": "PRADEEP KUMAR PAL",
+    "7881": "DEEPAK KUMAR",
+    "7882": "RAJVEER SINGH",
+    "7883": "DINESH",
+    "7884": "NEERAJ KUMAR",
+    "7885": "RAKESH SINGH BHADOURIYA",
+    "7886": "SACHIN KUMAR",
+    "7887": "MOHIT KUMAR BASOYA",
+    "7888": "PRAHLD SINGH",
+    "7889": "YOGESH VERMA",
+    "7890": "BALWANT RAI",
+    "7891": "RAJ KUMAR",
+    "7892": "UMESH SHARMA",
+    "7893": "NOORUDDIN",
+    "7894": "SHAMSAD AHAMAD",
+    "7895": "ALAMDAR HUSSAIN",
+    "7896": "DURGESH",
+    "7897": "LAUKESH KUMAR",
+    "7898": "HARENDRA KUMAR",
+    "7899": "GAJENDRA SINGH",
+    "7900": "MOHD QAMAR",
+    "7901": "JAGDISH",
+    "7902": "NEERAJ KUMAR TYAGI",
+    "7903": "SURENDRA SINGH",
+    "7904": "KAPIL SHARMA",
+    "7905": "VIPIN KUMAR",
+    "7906": "PRAMOD KUMAR",
+    "7907": "DEEPAK KUMAR",
+    "7908": "AJAY KUMAR",
+    "7909": "NAND KISHOR",
+    "7910": "AJAY KUMAR",
+    "7911": "PRAVEEN KUMAR",
+    "7912": "GUDDU TOMAR",
+    "7913": "CHANDRA VIR SINGH",
+    "7914": "NARESH KUMAR",
+    "7915": "AMIT KUMAR",
+    "7916": "ANIRUDH TYAGI",
+    "7917": "VIPIN KUMAR TYAGI",
+    "7918": "ARUN KUMAR",
+    "7919": "BIJENDER  ",
+    "7920": "PAWAN KUMAR",
+    "7921": "RAKESH KUMAR",
+    "7922": "KANWAR PAL",
+    "7923": "SACHIN  ",
+    "7924": "ISRAR",
+    "7925": "JITENDRA SHARMA",
+    "7926": "PRASHANT KUMAR",
+    "7927": "SACHIN KUMAR",
+    "7928": "BAHADUR",
+    "7929": "AMIT KUMAR",
+    "7930": "TINKU",
+    "7931": "LAXMAN PAWAR",
+    "7932": "ADITYA SINGH",
+    "7933": "PUSHPENDRA KUMAR",
+    "7934": "SANTOSH KUMAR",
+    "7935": "UMED SINGH",
+    "7936": "JAI PRAKASH",
+    "7937": "MUNNA SEN",
+    "7938": "SONU  ",
+    "7939": "JAKIR",
+    "7940": "ANIL KUMAR",
+    "7941": "MOHIT  ",
+    "7942": "VINAY TOMAR",
+    "7943": "SANDEEP KUMAR",
+    "7944": "ANWAR MALIK",
+    "7945": "DHARMENDER",
+    "7946": "RAM SEVAK",
+    "7947": "SOVINDRA",
+    "7948": "RAVI",
+    "7949": "MOHD ASHRAF",
+    "7950": "MOHD UMAR",
+    "7951": "DHARMENDRA SINGH",
+    "7952": "PRAVEEN KUMAR",
+    "7953": "SUMIT KUMAR",
+    "7954": "YOGESH KUMAR",
+    "7955": "ILYAS AHAMD",
+    "7956": "SANAVVAR KHAN",
+    "7957": "ASHOK KUMAR",
+    "7958": "ARVIND KUMAR",
+    "7959": "PUTTAN",
+    "7960": "PUSHPANDER YADAV",
+    "7961": "GOVIND RAM MISHRA",
+    "7962": "DEVENDRA",
+    "7963": "RAJEEV KUMAR",
+    "7964": "ANKIT",
+    "7965": "PARAMJEET ",
+    "7966": "AMIT KUMAR",
+    "7967": "SHAHNAWAJ",
+    "7968": "MONU SAINI ",
+    "7969": "SURESH KUMAR",
+    "7970": "KRISHAN KUMAR",
+    "7971": "BHARAT MUNI UPADHYAY",
+    "7972": "DINESH KUMAR TIWARI",
+    "7973": "ABDUL REHMAN",
+    "7974": "MOHD MOBEEN",
+    "7975": "RAHUL BALIYAN",
+    "7976": "AMIT LOONA",
+    "7977": "PRAVIN KUMAR",
+    "7978": "VINEET KUMAR",
+    "7979": "MOHD TASLIM",
+    "7980": "KUTBUDEEN",
+    "7981": "JITENDRA KUMAR",
+    "7982": "OM SHANKAR",
+    "7983": "MUKESH JAISWAL",
+    "7984": "RAJESH KUMAR ",
+    "7985": "LAVKESH RATHI",
+    "7986": "RAMAN KUMAR GUPTA",
+    "7987": "SANDEEP KUMAR",
+    "7988": "SONU SINGH",
+    "7989": "ANKIT RANA",
+    "7990": "RAVINDRA KUMAR",
+    "7991": "DEVESH KUMAR",
+    "7992": "PRASHANT SHARMA",
+    "7993": "ANIT KUMAR",
+    "7994": "RAMPAL",
+    "7995": "ASHOK KUMAR",
+    "7996": "AJAY KUMAR",
+    "7997": "HIMANSHU",
+    "7998": "DHRUV KUMAR SHARMA",
+    "7999": "AJAY KUMAR",
+    "8000": "ANIL",
+    "8001": "RAKESH KUMAR",
+    "8002": "PRINCE KUMAR GAUN",
+    "8003": "SANTOSH KUMAR TOMAR ",
+    "8004": "NARESH KUMAR",
+    "8005": "RAJ KUMAR ",
+    "8006": "JAGPAL SINGH",
+    "8007": "AMIT KUMAR",
+    "8008": "SURESH RAI",
+    "8009": "SUDHIR CHAUDHARY",
+    "8010": "KAVINDER MAAN ",
+    "8011": "BALIRAM RAM ",
+    "8012": "JOGENDRA KUMAR",
+    "8013": "DURGESH KUMAR SHUKLA",
+    "8014": "GUFRAN ALI KHAN",
+    "8015": "MOHD JUBER",
+    "8016": "SATENDRA SINGH",
+    "8017": "SHISH PAL SINGH",
+    "8018": "SH. BHAGWAN SINGH",
+    "8019": "NAUSHAD ALI",
+    "8020": "MONU",
+    "8021": "MANOJ KUMAR ",
+    "8022": "ISTIYAK AHMAD",
+    "8023": "MONU KUMAR",
+    "8024": "MAHESH KUMAR TIWARI ",
+    "8025": "AADIL",
+    "8026": "GULFAN",
+    "8027": "PINTOO ALAIS FAUJDARSINGH",
+    "8028": "BHUPENDRA",
+    "8029": "UMESH PAL",
+    "8030": "KULDEEP SINGH",
+    "8031": "PARVESH SHARMA",
+    "8032": "MOHD UMAR",
+    "8033": "MOHD ASIM",
+    "8034": "GULJAR",
+    "8035": "PRAKASH SAHA",
+    "8036": "AFJAL ALI",
+    "8037": "NAND KISHOR",
+    "8038": "GAUTAM TOMAR",
+    "8039": "JITENDER",
+    "8040": "SANJAY KUMAR",
+    "8041": "ANIL",
+    "8042": "ANIS",
+    "8043": "MUSTAK",
+    "8044": "SAMAYDEEN",
+    "8045": "PRVEEN KUMAR",
+    "8046": "PRAMOD KUMAR",
+    "8047": "ANIL",
+    "8048": "CHITRANJAN",
+    "8049": "SUBHASH SINGH",
+    "8050": "SANTOSH KUMAR",
+    "8051": "VIJAY PRAKASH",
+    "8052": "MOHD IMRAN",
+    "8053": "VIVEK KUMAR",
+    "8054": "FAIZAN",
+    "8055": "SONVIR PAWAR",
+    "8056": "RAJAN SINGH",
+    "8057": "PRAVEEN KUMAR",
+    "8058": "VIJAY KUMAR SHARMA",
+    "8059": "GYANENDRA SINGH",
+    "8060": "WASEEM AHMAD",
+    "8061": "PARMOD",
+    "8062": "PARVESH",
+    "8063": "SURENDAR SINGH",
+    "8064": "MAHENDRA SINGH",
+    "8065": "AZHAR ALI",
+    "8066": "MU SHAMEED",
+    "8067": "MOMEEN ALI",
+    "8068": "VIJAYA PARKASH",
+    "8069": "IMRAN AHMAD",
+    "8070": "VIPIN KUMAR",
+    "8071": "SONU",
+    "8072": "AJAY KUMAR",
+    "8073": "VISHNATH SINGH",
+    "8074": "SURAJ KUMAR",
+    "8075": "KANHAIYA LAL",
+    "8076": "SANJEEV KUMAR",
+    "8077": "PAPPAN SINGH",
+    "8078": "RAJ PAL",
+    "8079": "SUBHASH CHAND",
+    "8080": "ASHOK KUMAR SHARMA",
+    "8081": "NILU",
+    "8082": "MADAN KUMAR",
+    "8083": "NITIN KUMAR",
+    "8084": "MAINUDDIN",
+    "8085": "GOVIND BALLABH",
+    "8086": "KASIM KHAN",
+    "8087": "SUNIL GOSWAMI",
+    "8088": "GOPESH KUMAR",
+    "8089": "KAMLESH MEENA",
+    "8090": "ISRAR",
+    "8091": "GAURAV SINGH",
+    "8092": "SURESH SINGH",
+    "8093": "SACHIN KUMAR ",
+    "8094": "MANOJ",
+    "8095": "RAVI KUMAR",
+    "8096": "AJAY",
+    "8097": "BRIJESH DIWAKAR",
+    "T576": "RAJ KUMAR",
+    "T577": "VIKAS KUMAR",
+    "T578": "ARJUN PAL",
+    "T580": "AMIT KUMAR",
+    "T581": "MANOJ KUMAR",
+    "T583": "DEEPAK KUMAR",
+    "T584": "RAJESH KUMAR",
+    "T585": "NETRA PAL",
+    "T587": "SUNEEL KUMAR",
+    "T588": "KUNAL CHOUHARY",
+    "T589": "UJJWAL DHAMA",
+    "T591": "RAJU",
+    "T592": "SATENDRA",
+    "T593": "RAKESH KUMAR",
+    "T594": "SUMAN PAL",
+    "T595": "DESH BANDHU",
+    "T596": "VIJAY KAMAT",
+    "T597": "DEEPAK KUMAR",
+    "T598": "JAY PRAKASH RAW",
+    "T599": "AJAY SINGH PANWAR",
+    "T600": "ANUJ CHAUDHARY",
+    "T601": "AMRIT SAHRAWAT",
+    "T602": "WASEEM",
+    "T603": "SHANKER",
+    "T604": "SDINESH SHARMA",
+    "T606": "GAJENDRA SINGH",
+    "T607": "VARUN",
+    "T608": "NAZIM KHAN",
+    "T609": "YOGESH PRATAP",
+    "T610": "SURESH",
+    "T611": "LALIT  ",
+    "T612": "SANTOSH",
+    "T614": "MOHD BASHEER",
+    "T616": "RAVI SHARMA",
+    "T618": "SARNAM SINGH",
+    "T619": "SABIR ALI",
+    "T620": "GOPESH KUMAR",
+    "T622": "SURAJ",
+    "T623": "NITIN",
+    "T624": "AZAD SINGH",
+    "T625": "NAUSHAD HUSSAIN",
+    "T626": "MOHIT CHAUHAN",
+    "T627": "KAPIL  ",
+    "T628": "SILVA DASS",
+    "T630": "AMAN  ",
+    "T631": "MUKESH JAISWAL",
+    "T632": "RAJESH  ",
+    "T633": "ADESH KUMAR",
+    "T634": "BRIJPAL SINGH",
+    "T635": "AARIF KHAN",
+    "T636": "AJAY KUMAR TIWARI",
+    "T637": "ABHISHEK",
+    "T638": "NAJIM",
+    "T639": "LALIT",
+    "T640": "VIKAS CHAUDHARY",
+    "T641": "SANNY",
+    "T642": "JATAN SINGH",
+    "T643": "ALOK KUMAR",
+    "T645": "ROHIT KUMAR DUBEY",
+    "T646": "KULDEEP TYAGI",
+    "T647": "HIMANSHU",
+    "T648": "PRAMOD KUMAR",
+    "T649": "AJAY KUMAR",
+    "T650": "IMRAN KHAN",
+    "T651": "GOPAL",
+    "T652": "YOGESH KUMAR",
+    "T653": "ABID HUSSAIN",
+    "T654": "PRAVEEN KUMAR",
+    "T655": "PRAMOD KUMAR",
+    "T656": "SUKHVIR SINGH TOMAR",
+    "T657": "SHIV KUMAR",
+    "T659": "ZAHID ALI",
+    "T660": "DEVESH KUMAR",
+    "T662": "AJAI KUMAR",
+    "T663": "SURAJ KUMAR",
+    "T664": "JITENDER KUMAR",
+    "T665": "LOKESH BAISOYA",
+    "T666": "MD IRSHAD",
+    "T667": "PRAMOD KUMAR",
+    "T668": "GOVINDA",
+    "T669": "AMIT",
+    "T670": "FARHAT HUSSAIN",
+    "T671": "SUDHIR CHAUDHARY",
+    "T672": "NAUSHAD  ",
+    "T674": "SACHIN",
+    "T675": "SHIVAM UJJAWAL",
+    "T676": "SUNNY TYAGI",
+    "T677": "GAUTAM TOMAR",
+    "T678": "RAVI KUMAR",
+    "T679": "PIYUSH KUMAR",
+    "T680": "SATENDER KAGRA",
+    "T681": "RAM KISHORE",
+    "T682": "ATUL SHARMA",
+    "T683": "VIJAY KUMAR SHARMA",
+    "T684": "RAJESH KUMAR",
+    "T685": "GAURAV  ",
+    "T686": "RAJEEV KUMAR",
+    "T688": "PAPPU SETH",
+    "T689": "RAHUL KUMAR ",
+    "T690": "ACHHELAL MAHOT",
+    "T691": "MOHD ADIL KHAN ",
+    "T692": "SALMAN",
+    "T693": "HARISH KUMAR",
+    "T694": "GAURAV",
+    "T695": "RAJBANSAL",
+    "T696": "BILAL",
+    "T697": "  VIJANDRA KR",
+    "T698": "MOHD UMAR",
+    "T699": "PAWAN KUMAR ",
+    "T700": "KUNAL  ",
+    "T701": "SUNDER KUMAR SHARMA",
+    "T702": "MOHIT KUMAR SHARMA",
+    "T703": "MOHD FAIZAN",
+    "T704": "ADITYA  ",
+    "T705": "HIMANSHU CHAUDHARY",
+    "T706": "SANJU",
+    "T707": "BANTI",
+    "T708": "SHILENDRA",
+    "T709": "VINEEK KUMAR SETH",
+    "T710": "CHARAN SINGH",
+    "T711": "KUNWAR PAL SINGH",
+    "T712": "SAURAV ",
+
+
+
+
+
+
+
+        };
+        const driverNumbers = Object.keys(driverMaster);
+
+        // ========================== JS LOGIC ==========================
+
+        function generateDutyRows() {
+            const tbody = document.getElementById('dutyTableBody');
+            tbody.innerHTML = '';
+            dutyList.forEach((duty, idx) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${idx+1}.</td>
+                    <td>${duty[0]}</td>
+                    <td class="sch-km">${duty[1]}</td>
+                    <td class="input-wrap">
+                        <input type="text" class="bus-input" placeholder="Select Bus" autocomplete="off">
+                        <div class="custom-suggestions"></div>
+                    </td>
+                    <td class="input-wrap">
+                        <input type="text" class="driver-input" placeholder="Select Driver" autocomplete="off">
+                        <div class="custom-suggestions"></div>
+                    </td>
+                    <td class="driver-name"></td>
+                    <td><input type="number" class="out-odo" min="0"></td>
+                    <td><input type="number" class="in-odo" min="0"></td>
+                    <td class="operate-km"></td>
+                    <td class="time-marker"></td>
+                    <td>
+                        <button class="btn-save">Save</button>
+                        <button class="btn-heldup">Heldup</button>
+                        <button class="btn-reset hidden">Reset</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function setupCustomSuggestions() {
+            document.querySelectorAll('.bus-input').forEach(input => setupSuggestForInput(input, busNumbers));
+            document.querySelectorAll('.driver-input').forEach(input => setupSuggestForInput(input, driverNumbers));
+        }
+        function setupSuggestForInput(input, dataArr) {
+            const suggestionDiv = input.parentElement.querySelector('.custom-suggestions');
+            let activeIndex = -1;
+            let filtered = [];
+            function renderSuggestions() {
+                suggestionDiv.innerHTML = '';
+                if (filtered.length === 0) {
+                    suggestionDiv.classList.remove('show');
+                    return;
+                }
+                filtered.slice(0, 20).forEach((item, idx) => {
+                    const div = document.createElement('div');
+                    div.textContent = item;
+                    if (idx === activeIndex) div.classList.add('active');
+                    div.onmousedown = (e) => {
+                        e.preventDefault();
+                        input.value = item;
+                        suggestionDiv.classList.remove('show');
+                        input.dispatchEvent(new Event('change'));
+                    };
+                    suggestionDiv.appendChild(div);
+                });
+                suggestionDiv.classList.add('show');
+            }
+            function updateSuggestions() {
+                const val = input.value.trim().toUpperCase();
+                if (val.length < 3) {
+                    filtered = [];
+                    activeIndex = -1;
+                    suggestionDiv.classList.remove('show');
+                    return;
+                }
+                filtered = dataArr.filter(item => item.toUpperCase().includes(val));
+                if (filtered.length === 0) {
+                    activeIndex = -1;
+                } else {
+                    activeIndex = 0;
+                }
+                renderSuggestions();
+            }
+            input.addEventListener('input', function() {
+                updateSuggestions();
+            });
+            input.addEventListener('focus', function() {
+                updateSuggestions();
+            });
+            input.addEventListener('keydown', function(e) {
+                if (!suggestionDiv.classList.contains('show')) return;
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (filtered.length === 0) return;
+                    activeIndex = (activeIndex + 1) % filtered.length;
+                    renderSuggestions();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (filtered.length === 0) return;
+                    activeIndex = (activeIndex - 1 + filtered.length) % filtered.length;
+                    renderSuggestions();
+                } else if (e.key === 'Enter') {
+                    if (suggestionDiv.classList.contains('show') && filtered.length > 0 && activeIndex >= 0) {
+                        e.preventDefault();
+                        input.value = filtered[activeIndex];
+                        suggestionDiv.classList.remove('show');
+                        input.dispatchEvent(new Event('change'));
+                    }
+                } else if (e.key === 'Escape') {
+                    suggestionDiv.classList.remove('show');
+                }
+            });
+            document.addEventListener('mousedown', function(e){
+                if (!input.parentElement.contains(e.target)) suggestionDiv.classList.remove('show');
+            });
+        }
+
+        function setupDriverIdToName() {
+            document.querySelectorAll('.driver-input').forEach(input => {
+                input.addEventListener('input', function() {
+                    const row = input.closest('tr');
+                    const driverId = input.value.trim();
+                    const nameCell = row.querySelector('.driver-name');
+                    if (driverMaster[driverId]) {
+                        nameCell.textContent = driverMaster[driverId];
+                    } else {
+                        nameCell.textContent = '';
+                    }
+                });
+            });
+        }
+
+        function updateDateTime() {
+            const dt = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const date = dt.toLocaleDateString('en-US', options);
+            const time = dt.toLocaleTimeString('en-US', { hour12: false });
+            document.getElementById('datetime').textContent = `${date} ${time}`;
+        }
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast show ' + type;
+            setTimeout(() => {
+                toast.className = 'toast ' + type;
+            }, 2500);
+        }
+
+        function getToday() {
+            const d = new Date();
+            return d.toISOString().slice(0,10);
+        }
+
+        function getTableData() {
+            const rows = document.querySelectorAll('#dutyTable tbody tr');
+            let data = [];
+            rows.forEach(row => {
+                data.push({
+                    bus: row.querySelector('.bus-input').value,
+                    driver: row.querySelector('.driver-input').value,
+                    driverName: row.querySelector('.driver-name').textContent,
+                    outOdo: row.querySelector('.out-odo').value,
+                    inOdo: row.querySelector('.in-odo').value,
+                    operateKm: row.querySelector('.operate-km').textContent,
+                    timeMarker: row.querySelector('.time-marker').textContent,
+                    status: row.classList.contains('heldup') ? 'Heldup' : (row.classList.contains('saved') ? 'Saved' : '')
+                });
+            });
+            return data;
+        }
+        function setTableData(data) {
+            const rows = document.querySelectorAll('#dutyTable tbody tr');
+            rows.forEach((row, i) => {
+                if (data && data[i]) {
+                    row.querySelector('.bus-input').value = data[i].bus || '';
+                    row.querySelector('.driver-input').value = data[i].driver || '';
+                    row.querySelector('.driver-name').textContent = data[i].driverName || '';
+                    row.querySelector('.out-odo').value = data[i].outOdo || '';
+                    row.querySelector('.in-odo').value = data[i].inOdo || '';
+                    row.querySelector('.operate-km').textContent = data[i].operateKm || '';
+                    row.querySelector('.time-marker').textContent = data[i].timeMarker || '';
+                    row.classList.remove('saved', 'heldup');
+                    if (data[i].status === 'Heldup') row.classList.add('heldup');
+                    else if (data[i].status === 'Saved') row.classList.add('saved');
+                    row.querySelector('.btn-reset').classList.remove('hidden');
+                } else {
+                    row.querySelector('.bus-input').value = '';
+                    row.querySelector('.driver-input').value = '';
+                    row.querySelector('.driver-name').textContent = '';
+                    row.querySelector('.out-odo').value = '';
+                    row.querySelector('.in-odo').value = '';
+                    row.querySelector('.operate-km').textContent = '';
+                    row.querySelector('.time-marker').textContent = '';
+                    row.classList.remove('saved', 'heldup');
+                    row.querySelector('.btn-reset').classList.add('hidden');
+                }
+            });
+            setupCustomSuggestions();
+            setupDriverIdToName();
+        }
+
+        function saveToStorage() {
+            const date = document.getElementById('opdate').value;
+            const misName = document.getElementById('misname').value;
+            const tableData = getTableData();
+            localStorage.setItem('duty_dashboard_' + date, JSON.stringify({misName, tableData}));
+            document.getElementById('userNameText').textContent = misName || 'Select MIS Name';
+        }
+
+        function loadFromStorage() {
+            const date = document.getElementById('opdate').value;
+            const data = JSON.parse(localStorage.getItem('duty_dashboard_' + date) || '{}');
+            document.getElementById('misname').value = data.misName || '';
+            setTableData(data.tableData || []);
+            document.getElementById('userNameText').textContent = data.misName || 'Select MIS Name';
+        }
+
+        function clearTableData() {
+            setTableData([]);
+        }
+
+        function setupOdoListeners() {
+            document.querySelectorAll('.out-odo, .in-odo').forEach(input => {
+                input.addEventListener('input', function() {
+                    const row = input.closest('tr');
+                    const outOdoVal = row.querySelector('.out-odo').value;
+                    const inOdoVal = row.querySelector('.in-odo').value;
+                    const schKm = parseFloat(row.querySelector('.sch-km').textContent) || 0;
+                    const operateKmCell = row.querySelector('.operate-km');
+                    if (outOdoVal !== "" && inOdoVal !== "") {
+                        const outOdo = parseFloat(outOdoVal);
+                        const inOdo = parseFloat(inOdoVal);
+                        let operateKm = inOdo - outOdo;
+                        if (operateKm < 0 || operateKm > schKm + 30) {
+                            operateKmCell.textContent = '';
+                        } else {
+                            operateKmCell.textContent = operateKm.toFixed(1);
+                        }
+                    } else {
+                        operateKmCell.textContent = '';
+                    }
+                    saveToStorage();
+                });
+            });
+        }
+
+        function setupSaveButtons() {
+            document.querySelectorAll('.btn-save, .btn-heldup').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const row = btn.closest('tr');
+                    const outOdoVal = row.querySelector('.out-odo').value;
+                    const inOdoVal = row.querySelector('.in-odo').value;
+                    const schKm = parseFloat(row.querySelector('.sch-km').textContent) || 0;
+                    if (outOdoVal === "" || inOdoVal === "") {
+                        showToast('Please enter both Out ODO and In ODO before saving!', 'error');
+                        return;
+                    }
+                    const outOdo = parseFloat(outOdoVal);
+                    const inOdo = parseFloat(inOdoVal);
+                    let operateKm = inOdo - outOdo;
+                    if (operateKm < 0) {
+                        showToast('Operate Km cannot be negative!', 'error');
+                        return;
+                    }
+                    if (operateKm > schKm + 30) {
+                        showToast('Operate Km cannot be more than Sch. Km + 30!', 'error');
+                        return;
+                    }
+                    row.classList.remove('saved', 'heldup');
+                    if (btn.classList.contains('btn-save')) {
+                        row.classList.add('saved');
+                    } else {
+                        row.classList.add('heldup');
+                    }
+                    const now = new Date();
+                    let winName = window.name || "NoWindowName";
+                    const timeMarker = winName + ' | ' +
+                        now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+                    row.querySelector('.time-marker').textContent = timeMarker;
+                    row.querySelector('.btn-reset').classList.remove('hidden');
+                    saveToStorage();
+                    showToast('Data saved successfully!', 'success');
+                });
+            });
+        }
+
+        function setupResetButtons() {
+            document.querySelectorAll('.btn-reset').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const row = btn.closest('tr');
+                    row.querySelector('.bus-input').value = '';
+                    row.querySelector('.driver-input').value = '';
+                    row.querySelector('.driver-name').textContent = '';
+                    row.querySelector('.out-odo').value = '';
+                    row.querySelector('.in-odo').value = '';
+                    row.querySelector('.operate-km').textContent = '';
+                    row.querySelector('.time-marker').textContent = '';
+                    row.classList.remove('saved', 'heldup');
+                    btn.classList.add('hidden');
+                    saveToStorage();
+                    setupCustomSuggestions();
+                    setupDriverIdToName();
+                    showToast('Row reset!', 'success');
+                });
+            });
+        }
+
+        function setupMisNameChange() {
+            document.getElementById('misname').addEventListener('change', saveToStorage);
+        }
+
+        function setupInputSaveEvents() {
+            document.querySelectorAll('.bus-input, .driver-input, .out-odo, .in-odo').forEach(input => {
+                input.addEventListener('change', saveToStorage);
+                input.addEventListener('input', saveToStorage);
+            });
+            setupDriverIdToName();
+        }
+
+        document.getElementById('opdate').addEventListener('change', function() {
+            clearTableData();
+            saveToStorage();
+            loadFromStorage();
+            setupCustomSuggestions();
+            setupInputSaveEvents();
+            setupOdoListeners();
+            setupSaveButtons();
+            setupResetButtons();
+            setupDriverIdToName();
+        });
+
+        window.addEventListener('DOMContentLoaded', function() {
+            generateDutyRows();
+            const opdate = document.getElementById('opdate');
+            if (!opdate.value) opdate.value = getToday();
+            loadFromStorage();
+            setupCustomSuggestions();
+            setupInputSaveEvents();
+            setupOdoListeners();
+            setupSaveButtons();
+            setupResetButtons();
+            setupMisNameChange();
+            setupDriverIdToName();
+        });
+
+        document.getElementById('opdate').addEventListener('change', function() {
+            loadFromStorage();
+            setupCustomSuggestions();
+            setupInputSaveEvents();
+            setupOdoListeners();
+            setupSaveButtons();
+            setupResetButtons();
+            setupDriverIdToName();
+        });
+
+        document.getElementById('downloadExcel').addEventListener('click', function() {
+            let csv = '';
+            const depotName = 'INDRAPRASTHA DEPOT';
+            const misName = document.getElementById('misname').value || '';
+            const opdate = document.getElementById('opdate').value || '';
+            csv += 'MIS Name:,' + misName + '\n';
+            csv += 'Date:,' + opdate + '\n';
+            const headerCells = document.querySelectorAll('#dutyTable thead th');
+            let headers = ['Depot Name'];
+            headerCells.forEach(cell => headers.push(cell.textContent.trim()));
+            csv += headers.join(',') + '\n';
+            const rows = document.querySelectorAll('#dutyTable tbody tr');
+            rows.forEach(row => {
+                let rowData = [];
+                rowData.push(depotName); // Depot Name
+                rowData.push(row.cells[0].textContent.trim()); // S.No.
+                rowData.push(row.cells[1].textContent.trim()); // Duty No
+                rowData.push(row.cells[2].textContent.trim()); // Sch. Km
+                // Bus
+                const busInput = row.querySelector('.bus-input');
+                rowData.push(busInput ? busInput.value : '');
+                // Driver
+                const driverInput = row.querySelector('.driver-input');
+                rowData.push(driverInput ? driverInput.value : '');
+                // Driver Name
+                const driverName = row.querySelector('.driver-name');
+                rowData.push(driverName ? driverName.textContent : '');
+                // Out ODO
+                const outOdo = row.querySelector('.out-odo');
+                rowData.push(outOdo ? outOdo.value : '');
+                // In ODO
+                const inOdo = row.querySelector('.in-odo');
+                rowData.push(inOdo ? inOdo.value : '');
+                // Operate Km
+                const operateKm = row.querySelector('.operate-km');
+                rowData.push(operateKm ? operateKm.textContent : '');
+                // Time Marker
+                const timeMarker = row.querySelector('.time-marker');
+                rowData.push(timeMarker ? timeMarker.textContent : '');
+                // Action (leave blank)
+                rowData.push('');
+                csv += rowData.join(',') + '\n';
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'duty_assignment.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        });
+
+        // ========== GOOGLE SHEET SAVE BUTTON ==========
+        document.getElementById('saveToGoogleSheet').addEventListener('click', function() {
+            const depotName = 'INDRAPRASTHA DEPOT';
+            const operationDate = document.getElementById('opdate').value || '';
+            const misName = document.getElementById('misname').value || '';
+            const rows = document.querySelectorAll('#dutyTable tbody tr');
+            let dataToSend = [];
+
+            rows.forEach((row, idx) => {
+                if (row.classList.contains('saved') || row.classList.contains('heldup')) {
+                    dataToSend.push({
+                        "Depot Name": depotName,
+                        "Operation Date": operationDate,
+                        "MIS Name": misName,
+                        "S.No.": row.cells[0].textContent.trim(),
+                        "Duty No": row.cells[1].textContent.trim(),
+                        "Sch. Km": row.cells[2].textContent.trim(),
+                        "Bus Number": row.querySelector('.bus-input').value,
+                        "Driver ID": row.querySelector('.driver-input').value,
+                        "Driver Name": row.querySelector('.driver-name').textContent,
+                        "Out ODO": row.querySelector('.out-odo').value,
+                        "In ODO": row.querySelector('.in-odo').value,
+                        "Operate Km": row.querySelector('.operate-km').textContent,
+                        "Time Marker": row.querySelector('.time-marker').textContent,
+                        "Status": row.classList.contains('heldup') ? "Heldup" : "Saved"
+                    });
+                }
+            });
+
+            if (dataToSend.length === 0) {
+                showToast('No saved or heldup rows to send!', 'error');
+                return;
+            }
+
+            fetch('https://docs.google.com/spreadsheets/d/1GxZW2BzvWcjo18wW_0wzRXtt2j8rAglPX8inCPsDE2U/edit?gid=0#gid=0-S/dev', { // <-- https://script.google.com/macros/s/AKfycbwOMtukqQRw_b6-AdNL9Pu3h91wphydp8NYMvpxX4-S/dev
+                method: 'POST',
+                body: JSON.stringify(dataToSend),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.text())
+            .then(result => {
+                showToast(result, 'success');
+            })
+            .catch(error => {
+                showToast('Error: ' + error, 'error');
+            });
+        });
+
+    </script>
+</body>
+</html>
